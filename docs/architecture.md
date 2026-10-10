@@ -17,7 +17,7 @@
                 ┌───────────────────────────────────────────────┐
                 │           Node.js + Express API                │
                 │  /api/health /api/itineraries /api/trips       │
-                │  /api/disruptions /api/chat                    │
+                │  /api/bookings /api/disruptions /api/chat      │
                 │  /api/agent/status /api/agent/plan             │
                 └───────────────┬────────────────────────────────┘
                                 │  better-sqlite3 (synchronous)
@@ -26,7 +26,7 @@
                                 ▼
                 ┌───────────────────────────────────────────────┐
                 │            SQLite  server/data/*.db            │
-                │  itineraries · trips · disruptions             │
+                │  itineraries · trips · bookings · disruptions  │
                 └───────────────────────────────────────────────┘
 ```
 
@@ -100,10 +100,40 @@
   `PlannedItineraryCard`). Route `/simulator`, nav item "Disruption Simulator", linked from Disruption
   Management. Every event/status is badged **Simulated**.
 
+### Simulated booking workflow
+- `src/lib/bookings.ts` — pure domain core: `computeFare` (base + 12% taxes + add-ons − 5% refundable
+  discount), `validateBookingInput`, `generateBookingRef` (`TBS-####`, collision-safe), `seatForPreference`,
+  `bookingItineraryFromPlanned` / `bookingItineraryFromLegacy` / `normalizeToBookingItinerary`,
+  `buildLocalBooking`, `bookingToTrip` and `seedBookings`. Every booking carries `simulated: true`.
+- `server/db.ts` — a `bookings` table (ref unique, status, itinerary JSON, passengers JSON, fare columns,
+  assumptions, consent, timestamps) plus `listBookings`, `getBookingByRef`, `createBooking` (validates →
+  `BookingError` with field errors) and `cancelBooking` (404 unknown, 409 already cancelled). The DB path
+  honours `ROAMAGENT_DB_PATH` (tests use `:memory:`).
+- `server/index.ts` — `GET /api/bookings`, `GET /api/bookings/:ref`, `POST /api/bookings`,
+  `POST /api/bookings/:ref/cancel`. **Create and cancel require `confirmed: true`** and return `400`
+  otherwise, so no consequential action can happen without explicit confirmation.
+- `src/state/BookingsContext.tsx` — `useBookings()` exposes `{ bookings, trips, loading, source, error,
+  createBooking, cancelBooking, getBooking, refresh }`. It talks to the API and falls back to
+  `seedBookings()` offline; `trips` is a legacy-compatible view via `bookingToTrip`. Client (4xx) errors
+  propagate; transient failures degrade to a local simulated booking.
+- `src/pages/BookingReviewPage.tsx` — full journey + fare + traveller form, then an explicit confirmation
+  modal before saving. `src/pages/MyTripsPage.tsx` — saved bookings, filters, disruption alerts, suggested
+  alternatives, detail modal, check-in and a confirm-guarded cancellation.
+
+### Notification centre (simulated)
+- `src/state/NotificationsContext.tsx` — `useNotifications()` holds the in-app notifications, unread
+  count, a persisted **consent** flag (`roamagent.notify.consent`) and `previewDelivery`, which only
+  "delivers" when consent is granted. `src/lib/notifications.ts` builds notifications from booking and
+  cancellation events and seeds demo notices for the centre.
+- `src/components/notifications/NotificationCenter.tsx` — `NotificationBell` (unread badge) and a
+  slide-over panel with a consent toggle and per-item simulated delivery previews (email / SMS / push).
+  Wired into `AppShell` for desktop and mobile. **No real messages are sent.**
+
 ### State
 - `SettingsContext` — language + accessibility, persisted to `localStorage`, applied to `<html>`.
-- `TripsContext` — in-memory trip store (bookings, cancellations, status changes).
-- Server data is fetched per page; local contexts hold session edits.
+- `NotificationsProvider` — in-app notifications + delivery consent (persisted).
+- `BookingsProvider` — saved simulated bookings/cancellations (API-backed, demo fallback).
+- Server data is fetched through the contexts; pages consume `useBookings()` / `useNotifications()`.
 
 ## 2. Folder & file structure
 
@@ -122,7 +152,7 @@ travel-assistant/
 │   ├── index.ts               # Express app + routes (incl. /api/agent/*)
 │   ├── llm.ts                 # server-side LLM provider (key stays on server)
 │   ├── db.ts                  # SQLite schema, seeds, data access
-│   └── seed.ts                # seed itineraries / trips / disruptions
+│   └── seed.ts                # seed itineraries / trips / bookings / disruptions
 └── src/
     ├── main.tsx               # React entry
     ├── App.tsx                # providers + routes
@@ -131,11 +161,13 @@ travel-assistant/
     ├── lib/                   # types, format, intent, planner, llm, compare, chat, api, i18n, mock, cn
     │                          # + connections (simulated dataset) + itinerary (route engine)
     │                          # + disruption (simulated what-if recovery)
-    ├── state/                 # SettingsContext, TripsContext
+    │                          # + bookings (fare/validation/refs) + bookingsApi + notifications
+    ├── state/                 # SettingsContext, NotificationsContext, BookingsContext
     ├── components/
     │   ├── layout/AppShell.tsx
     │   ├── ui/                # Button, Card, Badge, Field, Modal, Skeleton, …
     │   ├── planner/           # TripPlanForm.tsx, PlannedItineraryCard.tsx
+    │   ├── notifications/     # NotificationCenter.tsx (bell + panel)
     │   ├── ItineraryCard.tsx
     │   ├── TransportIcon.tsx
     │   └── LiveRegion.tsx
