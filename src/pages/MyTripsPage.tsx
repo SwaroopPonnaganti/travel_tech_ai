@@ -1,6 +1,18 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Luggage, ArrowRight, Ticket, CalendarDays, Users, MapPin, XCircle, CheckCircle2 } from "lucide-react";
+import {
+  CalendarDays,
+  CheckCircle2,
+  HelpCircle,
+  Luggage,
+  MapPin,
+  RefreshCw,
+  ShieldAlert,
+  Sparkles,
+  Ticket,
+  Users,
+  XCircle,
+} from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -8,93 +20,154 @@ import { Modal } from "../components/ui/Modal";
 import { EmptyState } from "../components/ui/EmptyState";
 import { SegmentedControl } from "../components/ui/SegmentedControl";
 import { ModeIcon } from "../components/TransportIcon";
-import { useTrips } from "../state/TripsContext";
+import { useBookings } from "../state/BookingsContext";
+import { useNotifications } from "../state/NotificationsContext";
 import { useSettings } from "../state/SettingsContext";
-import { itineraries } from "../lib/mock";
-import type { Trip, TripStatus } from "../lib/types";
-import { formatDate, formatMoney } from "../lib/format";
+import { disruptions as demoDisruptions, itineraries as legacyItineraries } from "../lib/mock";
+import { createEmptyTripPlan } from "../lib/planner";
+import { planItineraries } from "../lib/itinerary";
+import { notificationFromCancellation } from "../lib/notifications";
+import type { Booking, BookingStatus } from "../lib/types";
+import { formatDate, formatDuration, formatMoney, formatTime } from "../lib/format";
 
-const STATUS_TONE: Record<TripStatus, "teal" | "navy" | "amber" | "rose"> = {
-  upcoming: "teal",
-  "in-progress": "amber",
+const STATUS_TONE: Record<BookingStatus, "teal" | "navy" | "rose"> = {
+  confirmed: "teal",
   completed: "navy",
   cancelled: "rose",
 };
 
 const FILTERS = [
   { value: "all" as const, label: "All" },
-  { value: "upcoming" as const, label: "Upcoming" },
+  { value: "confirmed" as const, label: "Confirmed" },
   { value: "completed" as const, label: "Completed" },
   { value: "cancelled" as const, label: "Cancelled" },
 ];
 
+interface Suggestion {
+  title: string;
+  detail: string;
+}
+
+function suggestAlternatives(booking: Booking): Suggestion[] {
+  const plan = {
+    ...createEmptyTripPlan(),
+    origin: booking.itinerary.from,
+    destination: booking.itinerary.to,
+    departureDate: booking.itinerary.date,
+    passengers: booking.travellers,
+  };
+  const result = planItineraries(plan, { date: booking.itinerary.date });
+  const fromEngine = [...result.feasible, ...result.alternatives].slice(0, 2).map((it) => ({
+    title: `${it.modes.join(" + ")} · ${it.legs} ${it.legs === 1 ? "leg" : "legs"}`,
+    detail: `${formatMoney(it.totalFare)} · ${formatDuration(it.totalDurationMin)}`,
+  }));
+  if (fromEngine.length) return fromEngine;
+  return legacyItineraries
+    .filter((it) => it.from === booking.itinerary.from && it.to === booking.itinerary.to)
+    .slice(0, 2)
+    .map((it) => ({
+      title: it.title,
+      detail: `${formatMoney(it.price)} · ${formatDuration(it.legs.reduce((s, l) => s + l.durationMin, 0))}`,
+    }));
+}
+
 export function MyTripsPage() {
   const { t, announce } = useSettings();
-  const { trips, cancelTrip } = useTrips();
+  const { bookings, cancelBooking, loading, source, error, refresh } = useBookings();
+  const { addNotification } = useNotifications();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["value"]>("all");
-  const [detail, setDetail] = useState<Trip | null>(null);
-  const [confirmCancel, setConfirmCancel] = useState<Trip | null>(null);
-  const [checkingIn, setCheckingIn] = useState<string | null>(null);
+  const [detail, setDetail] = useState<Booking | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<Booking | null>(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
   const [checkedIn, setCheckedIn] = useState<string[]>([]);
 
   const filtered = useMemo(
-    () => (filter === "all" ? trips : trips.filter((tr) => tr.status === filter)),
-    [trips, filter],
+    () => (filter === "all" ? bookings : bookings.filter((b) => b.status === filter)),
+    [bookings, filter],
   );
 
-  function checkIn(trip: Trip) {
-    setCheckingIn(trip.id);
-    window.setTimeout(() => {
-      setCheckedIn((prev) => [...prev, trip.id]);
-      setCheckingIn(null);
-      announce(`Check-in complete for ${trip.ref}`);
-    }, 900);
+  function checkIn(booking: Booking) {
+    setCheckedIn((prev) => (prev.includes(booking.ref) ? prev : [...prev, booking.ref]));
+    announce(`Simulated check-in complete for ${booking.ref}`);
+  }
+
+  async function confirmCancellation() {
+    if (!confirmCancel) return;
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      const updated = await cancelBooking(confirmCancel.ref, true);
+      addNotification(notificationFromCancellation(updated));
+      announce(`Booking ${updated.ref} cancelled`);
+      setConfirmCancel(null);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : "Could not cancel the booking");
+    } finally {
+      setCancelling(false);
+    }
   }
 
   return (
     <div className="space-y-6">
       <PageHeader
         icon={<Luggage className="h-5 w-5" />}
-        title={t("nav.trips")}
-        description="Every booking in one place — check-in status, seats, documents and quick actions."
-        action={<SegmentedControl name="Trip filter" value={filter} onChange={setFilter} options={FILTERS} />}
+        title={t("trips.title")}
+        description={t("trips.description")}
+        action={<SegmentedControl name={t("trips.filter.label")} value={filter} onChange={setFilter} options={FILTERS} />}
       />
 
-      {filtered.length === 0 ? (
+      {(source === "demo" || error) && (
+        <div role="status" className="flex items-center justify-between gap-3 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          <span className="flex items-center gap-2">
+            <HelpCircle className="h-4 w-4 shrink-0" /> {t("trips.offline")}
+          </span>
+          <Button variant="ghost" onClick={() => void refresh()} icon={<RefreshCw className="h-4 w-4" />}>
+            {t("common.retry")}
+          </Button>
+        </div>
+      )}
+
+      {loading ? (
+        <p className="text-sm text-slate-400">{t("common.loading")}</p>
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={<Luggage className="h-5 w-5" />}
-          title="No trips in this view"
-          description="Change the filter or plan a new trip to get started."
+          title={t("trips.empty.title")}
+          description={t("trips.empty.description")}
           action={
-            <Link to="/search" className="btn-primary">
-              Search trips
+            <Link to="/itineraries" className="btn-primary">
+              {t("trips.empty.action")}
             </Link>
           }
         />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          {filtered.map((trip) => {
-            const itinerary = itineraries.find((i) => i.id === trip.itineraryId);
-            const isCheckedIn = checkedIn.includes(trip.id);
+          {filtered.map((booking) => {
+            const alerts = demoDisruptions.filter((d) => d.tripId === booking.id && !d.resolved);
+            const isCheckedIn = checkedIn.includes(booking.ref);
+            const suggestions = alerts.length > 0 ? suggestAlternatives(booking) : [];
             return (
-              <article key={trip.id} className="card card-hover p-5">
+              <article key={booking.id} className="card card-hover p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3">
-                    {itinerary && (
-                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-teal-500/15 text-teal-200">
-                        <ModeIcon mode={itinerary.legs[0]!.mode} className="h-5 w-5" />
-                      </span>
-                    )}
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-teal-500/15 text-teal-200">
+                      <ModeIcon mode={booking.itinerary.legs[0]!.mode} className="h-5 w-5" />
+                    </span>
                     <div>
-                      <h3 className="font-display text-base font-semibold text-white">{trip.title}</h3>
-                      <p className="text-xs text-slate-400">Ref {trip.ref}</p>
+                      <h3 className="font-display text-base font-semibold text-white">
+                        {booking.itinerary.from} → {booking.itinerary.to}
+                      </h3>
+                      <p className="text-xs text-slate-400">
+                        {t("trips.ref")} {booking.ref}
+                      </p>
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge tone={STATUS_TONE[trip.status]}>{trip.status}</Badge>
+                    <Badge tone={STATUS_TONE[booking.status]}>{booking.status}</Badge>
                     {isCheckedIn && (
                       <Badge tone="teal">
-                        <CheckCircle2 className="h-3.5 w-3.5" /> Checked in
+                        <CheckCircle2 className="h-3.5 w-3.5" /> {t("trips.checkedIn")}
                       </Badge>
                     )}
                   </div>
@@ -103,48 +176,75 @@ export function MyTripsPage() {
                 <dl className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                   <div>
                     <dt className="flex items-center gap-1 text-xs text-slate-500">
-                      <CalendarDays className="h-3.5 w-3.5" /> Date
+                      <CalendarDays className="h-3.5 w-3.5" /> {t("trips.date")}
                     </dt>
-                    <dd className="text-slate-200">{formatDate(trip.startDate)}</dd>
+                    <dd className="text-slate-200">{formatDate(booking.itinerary.date)}</dd>
                   </div>
                   <div>
                     <dt className="flex items-center gap-1 text-xs text-slate-500">
-                      <MapPin className="h-3.5 w-3.5" /> Route
+                      <MapPin className="h-3.5 w-3.5" /> {t("trips.route")}
                     </dt>
                     <dd className="text-slate-200">
-                      {trip.from} → {trip.to}
+                      {booking.itinerary.from} → {booking.itinerary.to}
                     </dd>
                   </div>
                   <div>
                     <dt className="flex items-center gap-1 text-xs text-slate-500">
-                      <Users className="h-3.5 w-3.5" /> Travellers
+                      <Users className="h-3.5 w-3.5" /> {t("trips.travellers")}
                     </dt>
-                    <dd className="text-slate-200">{trip.travellers}</dd>
+                    <dd className="text-slate-200">{booking.travellers}</dd>
                   </div>
                   <div>
                     <dt className="flex items-center gap-1 text-xs text-slate-500">
-                      <Ticket className="h-3.5 w-3.5" /> Seats
+                      <Ticket className="h-3.5 w-3.5" /> {t("trips.seat")}
                     </dt>
-                    <dd className="text-slate-200">{trip.seat}</dd>
+                    <dd className="text-slate-200">{booking.seat}</dd>
                   </div>
                 </dl>
 
+                {alerts.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    {alerts.map((a) => (
+                      <div key={a.id} className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-100">
+                        <p className="flex items-center gap-2 font-semibold">
+                          <ShieldAlert className="h-3.5 w-3.5" /> {a.title}
+                          <Badge tone="amber">{a.severity}</Badge>
+                        </p>
+                        <p className="mt-1 text-amber-200/90">{a.detail}</p>
+                      </div>
+                    ))}
+                    {suggestions.length > 0 && (
+                      <div className="rounded-xl border border-teal-500/25 bg-teal-500/5 p-3">
+                        <p className="flex items-center gap-2 text-xs font-semibold text-teal-200">
+                          <Sparkles className="h-3.5 w-3.5" /> {t("trips.alternatives")}
+                        </p>
+                        <ul className="mt-2 space-y-1">
+                          {suggestions.map((s) => (
+                            <li key={s.title} className="flex items-center justify-between gap-2 text-xs text-slate-300">
+                              <span>{s.title}</span>
+                              <span className="text-slate-400">{s.detail}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="mt-4 flex flex-wrap items-center gap-2">
-                  <Button variant="secondary" onClick={() => setDetail(trip)}>
-                    View details
+                  <Button variant="secondary" onClick={() => setDetail(booking)}>
+                    {t("trips.viewDetails")}
                   </Button>
-                  {trip.status === "upcoming" && !isCheckedIn && (
-                    <Button loading={checkingIn === trip.id} onClick={() => checkIn(trip)}>
-                      Check in
-                    </Button>
+                  {booking.status === "confirmed" && !isCheckedIn && (
+                    <Button onClick={() => checkIn(booking)}>{t("trips.checkIn")}</Button>
                   )}
-                  {(trip.status === "upcoming" || trip.status === "in-progress") && (
-                    <Button variant="ghost" icon={<XCircle className="h-4 w-4" />} onClick={() => setConfirmCancel(trip)}>
-                      Cancel
+                  {booking.status === "confirmed" && (
+                    <Button variant="ghost" icon={<XCircle className="h-4 w-4" />} onClick={() => setConfirmCancel(booking)}>
+                      {t("trips.cancel")}
                     </Button>
                   )}
                   <span className="ml-auto font-display text-base font-bold text-white">
-                    {formatMoney(trip.price)}
+                    {formatMoney(booking.fare.total)}
                   </span>
                 </div>
               </article>
@@ -153,68 +253,97 @@ export function MyTripsPage() {
         </div>
       )}
 
-      <Modal open={!!detail} title={detail?.title ?? "Trip details"} onClose={() => setDetail(null)}>
+      <Modal open={!!detail} title={detail ? `${detail.itinerary.from} → ${detail.itinerary.to}` : t("trips.details.title")} onClose={() => setDetail(null)}>
         {detail && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Reference</span>
-              <span className="font-medium text-slate-100">{detail.ref}</span>
+          <div className="space-y-4">
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">{t("trips.ref")}</span>
+                <span className="font-medium text-slate-100">{detail.ref}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">{t("trips.details.status")}</span>
+                <Badge tone={STATUS_TONE[detail.status]}>{detail.status}</Badge>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">{t("trips.details.date")}</span>
+                <span className="font-medium text-slate-100">{formatDate(detail.itinerary.date)}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Route</span>
-              <span className="font-medium text-slate-100">
-                {detail.from} <ArrowRight className="inline h-3.5 w-3.5 text-teal-300" /> {detail.to}
-              </span>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t("trips.details.journey")}</p>
+              <ol className="space-y-2">
+                {detail.itinerary.legs.map((leg, idx) => (
+                  <li key={`${leg.code}-${idx}`} className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-sm">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2 text-slate-200">
+                        <ModeIcon mode={leg.mode} className="h-4 w-4 text-teal-300" />
+                        {leg.operator} · {leg.code}
+                      </span>
+                      <span className="text-xs text-slate-400">{formatDuration(leg.durationMin)}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {leg.from} {formatTime(leg.depart)} → {leg.to} {formatTime(leg.arrive)}
+                    </p>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Dates</span>
-              <span className="font-medium text-slate-100">
-                {formatDate(detail.startDate)} – {formatDate(detail.endDate)}
-              </span>
+
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{t("trips.details.passengers")}</p>
+              <ul className="space-y-1 text-sm text-slate-300">
+                {detail.passengers.map((p, idx) => (
+                  <li key={idx}>
+                    {p.firstName} {p.lastName} · {t("trips.details.idEnding")} {p.idNumber.slice(-4)}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Seats</span>
-              <span className="font-medium text-slate-100">{detail.seat}</span>
+
+            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">{t("trips.details.total")}</span>
+                <span className="font-semibold text-white">{formatMoney(detail.fare.total)}</span>
+              </div>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Fare</span>
-              <span className="font-medium text-slate-100">{formatMoney(detail.price)}</span>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs text-slate-400">
-              Free cancellation up to 24 hours before departure. ID proof required at boarding.
-            </div>
+
+            <ul className="space-y-1">
+              {detail.assumptions.slice(0, 2).map((a) => (
+                <li key={a} className="text-xs text-slate-500">
+                  {a}
+                </li>
+              ))}
+            </ul>
           </div>
         )}
       </Modal>
 
       <Modal
         open={!!confirmCancel}
-        title="Cancel this trip?"
-        onClose={() => setConfirmCancel(null)}
+        title={t("trips.cancel.title")}
+        onClose={() => (cancelling ? undefined : setConfirmCancel(null))}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setConfirmCancel(null)}>
-              Keep trip
+            <Button variant="secondary" onClick={() => setConfirmCancel(null)} disabled={cancelling}>
+              {t("trips.cancel.keep")}
             </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                if (confirmCancel) {
-                  cancelTrip(confirmCancel.id);
-                  announce(`Trip ${confirmCancel.ref} cancelled`);
-                }
-                setConfirmCancel(null);
-              }}
-            >
-              Yes, cancel
+            <Button variant="danger" onClick={() => void confirmCancellation()} loading={cancelling}>
+              {t("trips.cancel.confirm")}
             </Button>
           </>
         }
       >
-        <p>
-          Cancelling <strong className="text-slate-100">{confirmCancel?.ref}</strong> will refund 90% of the fare to the
-          original payment method within 5 working days.
+        <p>{t("trips.cancel.body").replace("{ref}", confirmCancel?.ref ?? "")}</p>
+        <p className="flex items-start gap-2 text-xs text-amber-200">
+          <ShieldAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" /> {t("trips.cancel.simulated")}
         </p>
+        {cancelError && (
+          <p role="alert" className="rounded-lg border border-rose-500/40 bg-rose-500/10 p-2 text-xs text-rose-200">
+            {cancelError}
+          </p>
+        )}
       </Modal>
     </div>
   );
