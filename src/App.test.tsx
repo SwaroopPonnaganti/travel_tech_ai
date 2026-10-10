@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AppRoutes } from "./App";
 import { SettingsProvider } from "./state/SettingsContext";
@@ -39,6 +39,15 @@ describe("App routing", () => {
     expect(screen.getByRole("heading", { name: /trip search/i })).toBeInTheDocument();
     expect(screen.getByLabelText("From")).toBeInTheDocument();
     expect(screen.getByLabelText("To")).toBeInTheDocument();
+  });
+
+  it("renders the trip planner with its structured form", async () => {
+    renderAt("/plan");
+    await act(async () => {});
+    expect(screen.getByRole("heading", { name: /trip planner/i })).toBeInTheDocument();
+    expect(screen.getByLabelText("From")).toBeInTheDocument();
+    expect(screen.getByLabelText("Departure date")).toBeInTheDocument();
+    expect(screen.getByLabelText("Passengers")).toBeInTheDocument();
   });
 
   it("shows a not found page for unknown routes", () => {
