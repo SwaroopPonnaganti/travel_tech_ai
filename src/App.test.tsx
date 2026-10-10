@@ -1,21 +1,38 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { AppRoutes } from "./App";
 import { SettingsProvider } from "./state/SettingsContext";
-import { TripsProvider } from "./state/TripsContext";
+import { BookingsProvider } from "./state/BookingsContext";
+import { NotificationsProvider } from "./state/NotificationsContext";
 
 function renderAt(path: string) {
   return render(
     <SettingsProvider>
-      <TripsProvider>
-        <MemoryRouter initialEntries={[path]}>
-          <AppRoutes />
-        </MemoryRouter>
-      </TripsProvider>
+      <NotificationsProvider>
+        <BookingsProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <AppRoutes />
+          </MemoryRouter>
+        </BookingsProvider>
+      </NotificationsProvider>
     </SettingsProvider>,
   );
 }
+
+beforeEach(() => {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        json: async () => [],
+      } as unknown as Response),
+    ),
+  );
+});
 
 describe("App routing", () => {
   it("renders the dashboard at the root route", () => {
