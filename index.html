@@ -1,0 +1,1082 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SafeRoute AI — Travel Assistant</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --bg2:#121933;
+    --card:#161e3c;
+    --card2:#1c2549;
+    --line:#2a3560;
+    --text:#eaf0ff;
+    --muted:#9aa8d0;
+    --accent:#4f8cff;
+    --accent2:#33d6a6;
+    --warn:#ffcc55;
+    --danger:#ff6b6b;
+    --ok:#33d6a6;
+    --radius:16px;
+    --shadow:0 12px 40px rgba(0,0,0,.35);
+    font-synthesis:none;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 85% -10%, rgba(79,140,255,.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 10%, rgba(51,214,166,.12), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;
+  }
+  a{color:var(--accent)}
+  .wrap{max-width:1120px;margin:0 auto;padding:18px 18px 80px}
+  header.top{
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px 0 18px;flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    box-shadow:var(--shadow);
+  }
+  .logo svg{width:26px;height:26px}
+  .brand h1{font-size:19px;margin:0;letter-spacing:.2px}
+  .brand p{margin:0;color:var(--muted);font-size:12.5px}
+  .pill{
+    font-size:11.5px;color:var(--muted);border:1px solid var(--line);
+    padding:5px 10px;border-radius:999px;background:rgba(255,255,255,.02)
+  }
+  nav.tabs{display:flex;gap:8px;flex-wrap:wrap}
+  .tab{
+    border:1px solid var(--line);background:var(--card);color:var(--muted);
+    padding:9px 15px;border-radius:999px;cursor:pointer;font-size:13.5px;font-weight:600;
+    transition:.15s;
+  }
+  .tab:hover{color:var(--text);border-color:var(--accent)}
+  .tab.active{
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#06122b;border-color:transparent;box-shadow:var(--shadow)
+  }
+  .grid{display:grid;gap:16px}
+  .cols-2{grid-template-columns:1.05fr .95fr}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.cols-2,.cols-3{grid-template-columns:1fr}}
+  .card{
+    background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:var(--radius);
+    padding:18px;box-shadow:var(--shadow);
+  }
+  .card h2{margin:0 0 4px;font-size:16px}
+  .card .sub{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px;font-weight:600}
+  input,select,textarea{
+    width:100%;background:#0e1530;border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:10px 12px;font-size:14px;outline:none;font-family:inherit
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.18)}
+  textarea{resize:vertical;min-height:70px}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:560px){.row,.row-3{grid-template-columns:1fr}}
+  button.btn{
+    border:none;border-radius:11px;padding:11px 16px;font-size:14px;font-weight:700;
+    cursor:pointer;background:linear-gradient(135deg,var(--accent),#6aa6ff);color:#06122b;
+    transition:.15s
+  }
+  button.btn:hover{filter:brightness(1.06);transform:translateY(-1px)}
+  button.btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  button.btn.ghost:hover{border-color:var(--accent)}
+  button.btn.ok{background:linear-gradient(135deg,var(--accent2),#5be6bd)}
+  button.btn.danger{background:linear-gradient(135deg,var(--danger),#ff8f8f)}
+  button.btn.warn{background:linear-gradient(135deg,var(--warn),#ffe08a);color:#2a1e00}
+  button.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{
+    font-size:12px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);
+    background:rgba(79,140,255,.08);color:var(--text)
+  }
+  .chip b{color:var(--accent2)}
+  .route{
+    border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:12px;
+    background:rgba(255,255,255,.02);transition:.15s
+  }
+  .route:hover{border-color:var(--accent)}
+  .route.best{border-color:var(--accent2);box-shadow:0 0 0 1px rgba(51,214,166,.35) inset}
+  .route-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+  .route-title{font-weight:700;font-size:15px}
+  .meta{color:var(--muted);font-size:12.5px;margin-top:3px}
+  .leg{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:13.5px;flex-wrap:wrap}
+  .mode{
+    font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+    padding:3px 8px;border-radius:7px;background:#22305c;color:#cfe0ff
+  }
+  .mode.flight{background:#233a6b;color:#bcd6ff}
+  .mode.train{background:#1f4a3d;color:#bff3df}
+  .mode.bus{background:#4a3f1f;color:#ffe6ad}
+  .mode.cab{background:#43315c;color:#e6ccff}
+  .score{
+    min-width:78px;text-align:center;border-radius:12px;padding:8px 10px;
+    border:1px solid var(--line);background:#0e1530
+  }
+  .score .n{font-size:20px;font-weight:800;line-height:1}
+  .score .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px}
+  .good{color:var(--ok)}.mid{color:var(--warn)}.bad{color:var(--danger)}
+  .fare{font-weight:800;font-size:16px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .banner{
+    border-radius:12px;padding:12px 14px;font-size:13px;border:1px solid var(--line);
+    background:rgba(79,140,255,.08);margin-top:12px
+  }
+  .banner.warn{background:rgba(255,204,85,.1);border-color:rgba(255,204,85,.35)}
+  .banner.danger{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.35)}
+  .banner.ok{background:rgba(51,214,166,.1);border-color:rgba(51,214,166,.35)}
+  .hidden{display:none !important}
+  .stat{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px dashed var(--line)}
+  .stat:last-child{border-bottom:none}
+  .stat span:last-child{font-weight:700}
+  ul.clean{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:13px}
+  ul.clean li{margin:5px 0}
+  .checklist label{display:flex;align-items:center;gap:10px;color:var(--text);font-size:13.5px;margin:9px 0;cursor:pointer}
+  .checklist input{width:auto}
+  .sos{
+    width:100%;padding:20px;border-radius:16px;border:1px solid rgba(255,107,107,.5);
+    background:radial-gradient(circle at 50% 0%,rgba(255,107,107,.25),rgba(255,107,107,.06));
+    color:#fff;font-size:18px;font-weight:800;cursor:pointer;letter-spacing:.4px
+  }
+  .sos:hover{filter:brightness(1.08)}
+  .modal-back{
+    position:fixed;inset:0;background:rgba(4,8,20,.7);display:grid;place-items:center;padding:20px;z-index:60;
+    backdrop-filter:blur(3px)
+  }
+  .modal{
+    width:100%;max-width:520px;background:linear-gradient(180deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)
+  }
+  .modal h3{margin:0 0 6px;font-size:17px}
+  .modal .sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+    background:#0e1530;border:1px solid var(--accent);color:var(--text);
+    padding:12px 18px;border-radius:12px;font-size:13.5px;z-index:80;box-shadow:var(--shadow)
+  }
+  .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#0e1530;border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:12px}
+  .flow{display:grid;gap:10px;counter-reset:step}
+  .flow .step{display:flex;gap:12px;align-items:flex-start}
+  .flow .num{
+    flex:0 0 30px;height:30px;border-radius:9px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#06122b;font-weight:800;font-size:13px
+  }
+  .flow .step p{margin:0;font-size:13px;color:var(--muted)}
+  .flow .step p b{color:var(--text)}
+  .tag{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted);margin:0 6px 6px 0}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6l-8-4Z" fill="#06122b" opacity=".85"/>
+          <path d="M8.5 12.2 11 14.7l4.6-5" stroke="#33d6a6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>SafeRoute AI</h1>
+        <p>Safety-first AI travel assistant &amp; route planner</p>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <span class="pill">Offline demo • no network calls</span>
+      <span class="pill" id="clock">—</span>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Sections">
+    <button class="tab active" data-tab="plan">Plan a trip</button>
+    <button class="tab" data-tab="manage">Manage trip</button>
+    <button class="tab" data-tab="safety">Safety center</button>
+    <button class="tab" data-tab="present">Presentation</button>
+  </nav>
+
+  <main style="margin-top:18px">
+
+    <section id="tab-plan" class="tabpane">
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>1 · Enter your travel details</h2>
+          <p class="sub">Type naturally, or fill the fields — the assistant understands both.</p>
+          <label for="nl">Describe your trip (natural language)</label>
+          <textarea id="nl" placeholder="e.g. I need a safe and cheap trip from Delhi to Mumbai next weekend for 2 people under 6000"></textarea>
+          <div class="actions">
+            <button class="btn" id="understandBtn">Understand request</button>
+            <button class="btn ghost" id="exampleBtn">Try an example</button>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="from">From</label>
+              <select id="from"></select>
+            </div>
+            <div>
+              <label for="to">To</label>
+              <select id="to"></select>
+            </div>
+          </div>
+          <div class="row-3">
+            <div>
+              <label for="when">Travel date</label>
+              <input type="date" id="when" />
+            </div>
+            <div>
+              <label for="pax">Travellers</label>
+              <input type="number" id="pax" min="1" max="9" value="1" />
+            </div>
+            <div>
+              <label for="budget">Budget (₹, optional)</label>
+              <input type="number" id="budget" min="0" placeholder="e.g. 6000" />
+            </div>
+          </div>
+          <label for="pref">Priority</label>
+          <select id="pref">
+            <option value="safest">Safest route</option>
+            <option value="cheapest">Cheapest</option>
+            <option value="fastest">Fastest</option>
+            <option value="balanced">Balanced (recommended)</option>
+          </select>
+          <div class="actions">
+            <button class="btn ok" id="planBtn">Show routes &amp; fares</button>
+          </div>
+
+          <div id="understanding" class="hidden">
+            <div class="banner ok" id="understandingText"></div>
+            <div class="chips" id="understandingChips"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>AI travel assistant</h2>
+          <p class="sub">What the assistant extracted from your request.</p>
+          <div id="assistantEmpty" class="banner">The assistant is idle. Enter a request and press <span class="kbd">Understand request</span>.</div>
+          <div id="assistantPanel" class="hidden">
+            <div class="stat"><span>From → To</span><span id="aiRoute">—</span></div>
+            <div class="stat"><span>Date</span><span id="aiDate">—</span></div>
+            <div class="stat"><span>Travellers</span><span id="aiPax">—</span></div>
+            <div class="stat"><span>Budget</span><span id="aiBudget">—</span></div>
+            <div class="stat"><span>Priority</span><span id="aiPref">—</span></div>
+            <div id="aiNotes" class="banner" style="display:none"></div>
+          </div>
+          <div style="margin-top:14px">
+            <p class="sub" style="margin:0">Safety promise</p>
+            <ul class="clean">
+              <li>Every route carries a live <b>Safety Score</b> (mode, time of day, corridor risk).</li>
+              <li>Late-night legs are flagged and re-ranked automatically.</li>
+              <li>SOS, trip sharing and a pre-departure checklist live in the Safety center.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="resultsCard" style="margin-top:16px">
+        <h2>2 · Travel planner — routes, fares &amp; durations</h2>
+        <p class="sub" id="resultsSub">No routes yet. Plan a trip to see recommendations ranked by your priority.</p>
+        <div id="results"></div>
+      </div>
+    </section>
+
+    <section id="tab-manage" class="tabpane hidden">
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>3 · Manage trip — delays &amp; cancellations</h2>
+          <p class="sub">When something goes wrong, the assistant re-routes you instantly.</p>
+          <div id="manageEmpty" class="banner">No active trip. Confirm a booking in the Plan tab first.</div>
+          <div id="manageActive" class="hidden">
+            <div class="route best" id="activeTrip"></div>
+            <div class="actions">
+              <button class="btn warn" id="delayBtn">Simulate delay</button>
+              <button class="btn danger" id="cancelBtn">Simulate cancellation</button>
+              <button class="btn ghost" id="clearTripBtn">Clear trip</button>
+            </div>
+            <div id="disruptionBanner"></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Alternative routes</h2>
+          <p class="sub" id="altSub">Alternatives appear here after a disruption.</p>
+          <div id="alternatives"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-safety" class="tabpane hidden">
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>Emergency SOS</h2>
+          <p class="sub">One tap alerts your trusted contacts with your trip details.</p>
+          <button class="sos" id="sosBtn">TRIGGER SOS</button>
+          <div id="sosOut"></div>
+          <div style="margin-top:14px">
+            <p class="sub" style="margin:0 0 6px">Trusted contacts</p>
+            <ul class="clean" id="contacts">
+              <li>Aarti — +91 98••• ••210 (primary)</li>
+              <li>Rahul — +91 90••• ••447 (secondary)</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Pre-departure safety checklist</h2>
+          <p class="sub">Anti-phishing &amp; travel-safety habits before you go.</p>
+          <div class="checklist" id="checklist"></div>
+          <div class="banner" id="checklistOut"></div>
+        </div>
+      </div>
+      <div class="grid cols-2" style="margin-top:16px">
+        <div class="card">
+          <h2>Live trip sharing</h2>
+          <p class="sub">Share a live link so someone can follow your journey.</p>
+          <div class="actions">
+            <button class="btn" id="shareBtn">Create share link</button>
+          </div>
+          <div id="shareOut"></div>
+        </div>
+        <div class="card">
+          <h2>Safety advisories</h2>
+          <p class="sub">Advisories adapt to your route and departure time.</p>
+          <div id="advisories"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tab-present" class="tabpane hidden">
+      <div class="grid cols-2">
+        <div class="card">
+          <h2>Project presentation — the solution</h2>
+          <p class="sub">SafeRoute AI is a safety-first AI travel assistant.</p>
+          <div class="flow">
+            <div class="step"><div class="num">1</div><p><b>User enters travel details.</b> Free text or a guided form captures origin, destination, date, travellers and budget.</p></div>
+            <div class="step"><div class="num">2</div><p><b>AI assistant understands.</b> A natural-language parser extracts intent, resolves city names and detects priority (safe/cheap/fast).</p></div>
+            <div class="step"><div class="num">3</div><p><b>Travel planner.</b> A route graph is searched (direct + one-stop) and ranked by fare, duration and a Safety Score.</p></div>
+            <div class="step"><div class="num">4</div><p><b>Delay &amp; cancellation.</b> A disrupted leg is removed and the graph is re-searched for alternatives with rebooking guidance.</p></div>
+            <div class="step"><div class="num">5</div><p><b>Booking consent.</b> The app asks permission and shows exactly what will be booked before any simulated confirmation.</p></div>
+            <div class="step"><div class="num">6</div><p><b>Demo.</b> Plan → book → disrupt → recover → SOS, all offline with no external services.</p></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>How it works</h2>
+          <p class="sub">Architecture &amp; design decisions.</p>
+          <div class="stat"><span>Frontend</span><span>Single-file HTML/CSS/JS app</span></div>
+          <div class="stat"><span>AI understanding</span><span>Deterministic NL intent parser</span></div>
+          <div class="stat"><span>Route engine</span><span>Weighted graph search + ranking</span></div>
+          <div class="stat"><span>Disruption handling</span><span>Edge removal + re-search</span></div>
+          <div class="stat"><span>Booking</span><span>Consent-gated simulation</span></div>
+          <div class="stat"><span>Reliability</span><span>100% offline, no CDN/API</span></div>
+          <div style="margin-top:14px">
+            <p class="sub" style="margin:0 0 6px">Tech tags</p>
+            <span class="tag">Vanilla JS</span>
+            <span class="tag">Graph search</span>
+            <span class="tag">NLU heuristics</span>
+            <span class="tag">Safety scoring</span>
+            <span class="tag">Accessible UI</span>
+          </div>
+          <div class="banner" style="margin-top:14px">
+            <b>About the certificate verification error:</b> demo apps often break when a laptop is offline, behind a captive portal, or blocked by a proxy because a CDN/API call fails TLS verification (e.g. <span class="kbd">UNABLE_TO_VERIFY_LEAF_SIGNATURE</span> or <span class="kbd">ERR_CERT_AUTHORITY_INVALID</span>). SafeRoute AI makes <b>zero external requests</b>, so it presents reliably anywhere — no certificate prompts.
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>SafeRoute AI · demonstration build · all bookings are simulated for safety — no real reservations, payments or data leave this device.</footer>
+</div>
+
+<div id="modalRoot"></div>
+<div id="toastRoot"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var CITIES = {
+    delhi:{name:"New Delhi", region:"North", base:78},
+    jaipur:{name:"Jaipur", region:"North", base:80},
+    agra:{name:"Agra", region:"North", base:74},
+    lucknow:{name:"Lucknow", region:"North", base:76},
+    varanasi:{name:"Varanasi", region:"East", base:72},
+    kolkata:{name:"Kolkata", region:"East", base:75},
+    mumbai:{name:"Mumbai", region:"West", base:82},
+    pune:{name:"Pune", region:"West", base:83},
+    goa:{name:"Goa", region:"West", base:81},
+    ahmedabad:{name:"Ahmedabad", region:"West", base:79},
+    hyderabad:{name:"Hyderabad", region:"South", base:81},
+    bengaluru:{name:"Bengaluru", region:"South", base:84},
+    chennai:{name:"Chennai", region:"South", base:80},
+    kochi:{name:"Kochi", region:"South", base:78}
+  };
+
+  var EDGES = [
+    {a:"delhi",b:"jaipur",mode:"train",op:"Rajdhani Express",min:270,fee:900,safety:88},
+    {a:"delhi",b:"jaipur",mode:"bus",op:"Volvo AC",min:330,fee:650,safety:76},
+    {a:"delhi",b:"agra",mode:"train",op:"Gatimaan Express",min:100,fee:750,safety:89},
+    {a:"delhi",b:"mumbai",mode:"flight",op:"IndiGo",min:130,fee:5200,safety:92},
+    {a:"delhi",b:"mumbai",mode:"train",op:"Rajdhani Express",min:990,fee:2100,safety:87},
+    {a:"delhi",b:"lucknow",mode:"train",op:"Shatabdi Express",min:390,fee:1100,safety:86},
+    {a:"delhi",b:"varanasi",mode:"flight",op:"Air India",min:95,fee:4300,safety:90},
+    {a:"delhi",b:"kolkata",mode:"flight",op:"Vistara",min:135,fee:4800,safety:91},
+    {a:"delhi",b:"kolkata",mode:"train",op:"Rajdhani Express",min:1020,fee:2400,safety:86},
+    {a:"delhi",b:"bengaluru",mode:"flight",op:"IndiGo",min:165,fee:5600,safety:91},
+    {a:"delhi",b:"hyderabad",mode:"flight",op:"SpiceJet",min:145,fee:5100,safety:90},
+    {a:"jaipur",b:"ahmedabad",mode:"train",op:"Intercity Express",min:420,fee:800,safety:82},
+    {a:"agra",b:"varanasi",mode:"train",op:"Marudhar Express",min:600,fee:950,safety:80},
+    {a:"lucknow",b:"varanasi",mode:"cab",op:"Verified intercity cab",min:300,fee:2600,safety:78},
+    {a:"varanasi",b:"kolkata",mode:"train",op:"Vibhuti Express",min:720,fee:900,safety:79},
+    {a:"mumbai",b:"pune",mode:"cab",op:"Verified intercity cab",min:180,fee:2200,safety:85},
+    {a:"mumbai",b:"pune",mode:"train",op:"Deccan Queen",min:210,fee:520,safety:88},
+    {a:"mumbai",b:"goa",mode:"train",op:"Konkan Kanya Express",min:660,fee:1350,safety:86},
+    {a:"mumbai",b:"goa",mode:"flight",op:"Akasa Air",min:80,fee:3400,safety:91},
+    {a:"mumbai",b:"ahmedabad",mode:"train",op:"Shatabdi Express",min:390,fee:1050,safety:87},
+    {a:"mumbai",b:"bengaluru",mode:"flight",op:"IndiGo",min:105,fee:4200,safety:92},
+    {a:"mumbai",b:"hyderabad",mode:"flight",op:"Air India Express",min:95,fee:3900,safety:90},
+    {a:"mumbai",b:"chennai",mode:"flight",op:"IndiGo",min:120,fee:4400,safety:91},
+    {a:"pune",b:"bengaluru",mode:"flight",op:"SpiceJet",min:100,fee:4100,safety:90},
+    {a:"pune",b:"hyderabad",mode:"train",op:"Shatabdi Express",min:600,fee:1200,safety:84},
+    {a:"goa",b:"kochi",mode:"flight",op:"IndiGo",min:95,fee:4300,safety:90},
+    {a:"goa",b:"bengaluru",mode:"train",op:"Yesvantpur Express",min:720,fee:1100,safety:83},
+    {a:"ahmedabad",b:"mumbai",mode:"bus",op:"Sleeper AC",min:510,fee:900,safety:77},
+    {a:"hyderabad",b:"bengaluru",mode:"bus",op:"Sleeper AC",min:600,fee:1400,safety:80},
+    {a:"hyderabad",b:"bengaluru",mode:"flight",op:"IndiGo",min:80,fee:3600,safety:91},
+    {a:"hyderabad",b:"chennai",mode:"train",op:"Charminar Express",min:780,fee:950,safety:82},
+    {a:"bengaluru",b:"chennai",mode:"train",op:"Shatabdi Express",min:300,fee:950,safety:88},
+    {a:"bengaluru",b:"chennai",mode:"bus",op:"Volvo AC",min:360,fee:800,safety:79},
+    {a:"bengaluru",b:"kochi",mode:"flight",op:"Akasa Air",min:75,fee:3900,safety:90},
+    {a:"chennai",b:"kochi",mode:"train",op:"Alleppey Express",min:720,fee:800,safety:83},
+    {a:"kolkata",b:"chennai",mode:"flight",op:"IndiGo",min:135,fee:4700,safety:90},
+    {a:"kolkata",b:"bengaluru",mode:"flight",op:"Air India Express",min:150,fee:5000,safety:90}
+  ];
+
+  var state = {
+    routes:[],
+    selected:null,
+    booking:null,
+    disruptedEdge:null
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  function el(tag, cls, html){ var e=document.createElement(tag); if(cls)e.className=cls; if(html!=null)e.innerHTML=html; return e; }
+  function inr(n){ return "\u20B9" + Math.round(n).toLocaleString("en-IN"); }
+  function dur(min){
+    var h=Math.floor(min/60), m=Math.round(min%60);
+    return (h?h+"h ":"") + m + "m";
+  }
+  function scoreClass(s){ return s>=85?"good":(s>=75?"mid":"bad"); }
+  function cityName(k){ return (CITIES[k]&&CITIES[k].name) || k; }
+
+  function adjacency(){
+    var g={};
+    for(var k in CITIES) g[k]=[];
+    EDGES.forEach(function(e,i){
+      g[e.a].push({to:e.b, edge:e, idx:i});
+      g[e.b].push({to:e.a, edge:e, idx:i});
+    });
+    return g;
+  }
+
+  function edgeKey(e){ return e.a+"|"+e.b+"|"+e.mode+"|"+e.op; }
+  function edgeDisabled(e){
+    if(!state.disruptedEdge) return false;
+    return edgeKey(e)===state.disruptedEdge.key && state.disruptedEdge.disabled;
+  }
+
+  function pathMetrics(path){
+    var totalMin=0, totalFee=0, safetySum=0, modeSet={};
+    path.forEach(function(leg){
+      var e=leg.edge;
+      totalMin+=e.min; totalFee+=e.fee; safetySum+=e.safety;
+      modeSet[e.mode]=true;
+    });
+    var avgSafety=safetySum/path.length;
+    var score=avgSafety;
+    if(path.length>1) score-=4;
+    score=Math.max(40,Math.min(99,Math.round(score)));
+    return {min:totalMin, fee:totalFee, score:score, modes:Object.keys(modeSet)};
+  }
+
+  function findPaths(from, to){
+    var g=adjacency(), paths=[];
+    (g[from]||[]).forEach(function(l1){
+      if(edgeDisabled(l1.edge)) return;
+      if(l1.to===to){ paths.push([{edge:l1.edge, from:from, to:l1.to}]); return; }
+      (g[l1.to]||[]).forEach(function(l2){
+        if(l2.edge===l1.edge) return;
+        if(edgeDisabled(l2.edge)) return;
+        if(l2.to===to){
+          paths.push([
+            {edge:l1.edge, from:from, to:l1.to},
+            {edge:l2.edge, from:l1.to, to:to}
+          ]);
+        }
+      });
+    });
+    var seen={}, uniq=[];
+    paths.forEach(function(p){
+      var key=p.map(function(leg){ return leg.from+">"+leg.to+"|"+edgeKey(leg.edge); }).join(">");
+      if(!seen[key]){ seen[key]=true; uniq.push(p); }
+    });
+    return uniq;
+  }
+
+  function rankRoutes(paths, pref, pax, budget){
+    var ranked=paths.map(function(p){
+      var m=pathMetrics(p);
+      return {path:p, min:m.min, fee:m.fee, score:m.score, modes:m.modes, pax:pax, total:m.fee*pax};
+    });
+    ranked.sort(function(a,b){
+      if(pref==="cheapest") return a.total-b.total;
+      if(pref==="fastest") return a.min-b.min;
+      if(pref==="safest") return b.score-a.score;
+      var wa=a.total/1000 + a.min/60 - a.score/20;
+      var wb=b.total/1000 + b.min/60 - b.score/20;
+      return wa-wb;
+    });
+    ranked.forEach(function(r){
+      r.overBudget = !!budget && r.total>budget;
+      r.night = isNightDeparture();
+    });
+    return ranked;
+  }
+
+  function isNightDeparture(){
+    var h=new Date().getHours();
+    return (h>=22 || h<6);
+  }
+
+  function routeTitle(r){
+    var stops=[];
+    var p=r.path;
+    stops.push(cityName(p[0].from));
+    p.forEach(function(leg){ stops.push(cityName(leg.to)); });
+    return stops.join(" \u2192 ");
+  }
+
+  var CITY_WORDS = (function(){
+    var map={};
+    for(var k in CITIES){
+      map[CITIES[k].name.toLowerCase()]=k;
+      map[k]=k;
+      var short=CITIES[k].name.split(" ")[0].toLowerCase();
+      map[short]=k;
+    }
+    map["new delhi"]="delhi";
+    map["bombay"]="mumbai";
+    map["bangalore"]="bengaluru";
+    map["madras"]="chennai";
+    map["calcutta"]="kolkata";
+    map["cochin"]="kochi";
+    map["gurgaon"]="delhi";
+    map["noida"]="delhi";
+    return map;
+  })();
+
+  function findCitiesInText(t){
+    var found=[], lower=t.toLowerCase();
+    var names=Object.keys(CITY_WORDS).sort(function(a,b){return b.length-a.length;});
+    names.forEach(function(n){
+      var re=new RegExp("\\b"+n.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
+      var m=lower.match(re);
+      if(m){
+        var key=CITY_WORDS[n];
+        if(found.indexOf(key)<0) found.push({key:key, at:m.index});
+      }
+    });
+    return found;
+  }
+
+  function parseRequest(text){
+    var out={};
+    var t=text||"";
+    var lower=t.toLowerCase();
+    var cities=findCitiesInText(t);
+    var fromTo=lower.match(/from\s+([a-z ]+?)\s+to\s+([a-z ]+?)(?:[.,]|$| on | next | this | for | under | budget|$)/);
+    if(cities.length>=2){
+      var ordered=cities.slice().sort(function(a,b){return a.at-b.at;});
+      out.from=ordered[0].key; out.to=ordered[1].key;
+    } else if(cities.length===1){
+      out.to=cities[0].key;
+    }
+    var mPref=lower.match(/\b(safe(?:st|ty)?|secure)\b/);
+    var mCheap=lower.match(/\b(cheap(?:est|er)?|budget|economic(?:al)?|low cost)\b/);
+    var mFast=lower.match(/\b(fast(?:est|er)?|quick(?:est|er)?|speed)\b/);
+    if(mPref) out.pref="safest";
+    else if(mCheap) out.pref="cheapest";
+    else if(mFast) out.pref="fastest";
+    var mMoney=lower.match(/(?:under|below|within|budget(?: of)?|max(?:imum)?|upto|up to)\s*[₹rs.\s]*([0-9][0-9,]{2,})/);
+    if(mMoney){ out.budget=parseInt(mMoney[1].replace(/,/g,""),10); }
+    var mPax=lower.match(/\b([1-9])\s*(?:adults?|people|persons?|travell?ers?|pax|guests?)\b/);
+    if(mPax) out.pax=parseInt(mPax[1],10);
+    if(/\btomorrow\b/.test(lower)) out.date=addDays(1);
+    else if(/\btoday\b/.test(lower)) out.date=todayStr();
+    else if(/next weekend/.test(lower)) out.date=nextWeekend();
+    else if(/this weekend/.test(lower)) out.date=thisWeekend();
+    else {
+      var mDate=lower.match(/\b(?:on|by|for)\s+(\d{1,2}\s+[a-z]{3,9})(?:\s+(\d{4}))?/);
+      if(mDate){
+        var d=new Date(mDate[1]+" "+(mDate[2]||new Date().getFullYear()));
+        if(!isNaN(d)) out.date=isoDate(d);
+      }
+    }
+    return out;
+  }
+
+  function pad(n){ return (n<10?"0":"")+n; }
+  function isoDate(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate()); }
+  function todayStr(){ return isoDate(new Date()); }
+  function addDays(n){ var d=new Date(); d.setDate(d.getDate()+n); return isoDate(d); }
+  function nextWeekend(){
+    var d=new Date(); var day=d.getDay();
+    var add=((6-day+7)%7)||7;
+    d.setDate(d.getDate()+add);
+    return isoDate(d);
+  }
+  function thisWeekend(){
+    var d=new Date(); var day=d.getDay();
+    var add=(6-day+7)%7;
+    d.setDate(d.getDate()+add);
+    return isoDate(d);
+  }
+
+  function fillSelects(){
+    var keys=Object.keys(CITIES).sort(function(a,b){return CITIES[a].name.localeCompare(CITIES[b].name);});
+    var from=$("from"), to=$("to");
+    keys.forEach(function(k){
+      var o1=el("option",null,CITIES[k].name); o1.value=k; from.appendChild(o1);
+      var o2=el("option",null,CITIES[k].name); o2.value=k; to.appendChild(o2);
+    });
+    from.value="delhi"; to.value="mumbai";
+  }
+
+  function currentInputs(){
+    return {
+      from:$("from").value,
+      to:$("to").value,
+      date:$("when").value,
+      pax:Math.max(1,parseInt($("pax").value,10)||1),
+      budget:parseInt($("budget").value,10)||0,
+      pref:$("pref").value
+    };
+  }
+
+  function planTrip(){
+    var inp=currentInputs();
+    if(inp.from===inp.to){
+      toast("Origin and destination are the same.");
+      return;
+    }
+    var paths=findPaths(inp.from,inp.to);
+    if(!paths.length){
+      $("resultsSub").textContent = "No routes found between "+cityName(inp.from)+" and "+cityName(inp.to)+" in this demo network.";
+      $("results").innerHTML="";
+      state.routes=[];
+      return;
+    }
+    state.routes=rankRoutes(paths,inp.pref,inp.pax,inp.budget);
+    state.selected=null;
+    $("resultsSub").textContent = state.routes.length+" route option"+(state.routes.length>1?"s":"")+" for "+cityName(inp.from)+" \u2192 "+cityName(inp.to)+", ranked by "+prefLabel(inp.pref)+". Fares shown for "+inp.pax+" traveller"+(inp.pax>1?"s":"")+".";
+    renderResults(inp);
+    $("resultsCard").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  function prefLabel(p){
+    return {safest:"safety",cheapest:"lowest fare",fastest:"shortest duration",balanced:"balanced value"}[p]||p;
+  }
+
+  function modeBadge(mode){
+    return '<span class="mode '+mode+'">'+mode+'</span>';
+  }
+
+  function renderResults(inp){
+    var host=$("results"); host.innerHTML="";
+    state.routes.forEach(function(r,i){
+      var card=el("div","route"+(i===0?" best":""));
+      var head=el("div","route-head");
+      var left=el("div");
+      left.appendChild(el("div","route-title",routeTitle(r)+(i===0?' <span class="chip" style="margin-left:6px">Top pick</span>':"")));
+      left.appendChild(el("div","meta", r.path.length===1?"Direct · ":"1 stop · " + r.modes.map(function(m){return m[0].toUpperCase()+m.slice(1);}).join(" + ")));
+      var sc=el("div","score");
+      sc.appendChild(el("div","n "+scoreClass(r.score),String(r.score)));
+      sc.appendChild(el("div","l","Safety"));
+      head.appendChild(left); head.appendChild(sc);
+      card.appendChild(head);
+
+      r.path.forEach(function(leg){
+        var e=leg.edge;
+        var row=el("div","leg");
+        row.innerHTML = modeBadge(e.mode)+" <b>"+cityName(leg.from)+" \u2192 "+cityName(leg.to)+"</b> <span class='meta'>"+e.op+"</span> <span class='meta' style='margin-left:auto'>"+dur(e.min)+" · "+inr(e.fee)+"/person</span>";
+        card.appendChild(row);
+      });
+
+      var foot=el("div","route-head");
+      var f1=el("div");
+      f1.innerHTML = "<div class='meta'>Total duration <b style='color:var(--text)'>"+dur(r.min)+"</b> · Per person <b style='color:var(--text)'>"+inr(r.fee)+"</b></div>";
+      var f2=el("div","fare",inr(r.total)+" <span class='meta' style='font-weight:400'>total</span>");
+      foot.appendChild(f1); foot.appendChild(f2);
+      card.appendChild(foot);
+
+      if(r.overBudget){
+        card.appendChild(el("div","banner warn","Over your budget by "+inr(r.total-inp.budget)+". Consider a cheaper option below."));
+      }
+      if(r.night && r.modes.indexOf("cab")>=0){
+        card.appendChild(el("div","banner warn","Late-night cab leg detected. Prefer a train or flight for this hour, or book a verified intercity cab."));
+      }
+      if(r.score>=90){
+        card.appendChild(el("div","banner ok","High-safety corridor: verified operators, frequent support coverage."));
+      }
+
+      var acts=el("div","actions");
+      var select=el("button","btn ok","Select & book");
+      select.onclick=function(){ openBooking(r); };
+      var details=el("button","btn ghost","Why this rank?");
+      details.onclick=function(){ toast(rankReason(r,inp.pref)); };
+      acts.appendChild(select); acts.appendChild(details);
+      card.appendChild(acts);
+      host.appendChild(card);
+    });
+  }
+
+  function rankReason(r,pref){
+    if(pref==="cheapest") return "Lowest total fare for your group at "+inr(r.total)+".";
+    if(pref==="fastest") return "Shortest journey at "+dur(r.min)+" for this origin–destination pair.";
+    if(pref==="safest") return "Highest safety score ("+r.score+") across mode, operator and corridor.";
+    return "Balanced on fare, time and safety — best overall value for your trip.";
+  }
+
+  function openBooking(r){
+    var inp=currentInputs();
+    var dateTxt=inp.date?fmtDate(inp.date):"your chosen date";
+    var modal=el("div","modal-back");
+    var box=el("div","modal");
+    box.innerHTML =
+      "<h3>Confirm before booking</h3>"+
+      "<p class='sub'>This is a simulated booking. Nothing is charged and no data leaves this device.</p>"+
+      "<div class='stat'><span>Route</span><span>"+routeTitle(r)+"</span></div>"+
+      "<div class='stat'><span>Date</span><span>"+dateTxt+"</span></div>"+
+      "<div class='stat'><span>Travellers</span><span>"+r.pax+"</span></div>"+
+      "<div class='stat'><span>Total fare</span><span>"+inr(r.total)+"</span></div>"+
+      "<div class='stat'><span>Safety score</span><span class='"+scoreClass(r.score)+"'>"+r.score+"</span></div>"+
+      "<label style='display:flex;align-items:center;gap:10px;color:var(--text);margin-top:14px'>"+
+        "<input type='checkbox' id='consent' style='width:auto'> I allow SafeRoute AI to make this simulated booking.</label>";
+    var actions=el("div","actions");
+    var confirm=el("button","btn ok","Confirm booking");
+    var cancel=el("button","btn ghost","Cancel");
+    confirm.disabled=true;
+    actions.appendChild(confirm); actions.appendChild(cancel);
+    box.appendChild(actions);
+    modal.appendChild(box);
+    $("modalRoot").appendChild(modal);
+
+    var consent=box.querySelector("#consent");
+    consent.onchange=function(){ confirm.disabled=!consent.checked; };
+    cancel.onclick=function(){ $("modalRoot").innerHTML=""; };
+    modal.onclick=function(ev){ if(ev.target===modal) $("modalRoot").innerHTML=""; };
+    confirm.onclick=function(){
+      var pnr=makePNR();
+      state.booking={route:r, date:inp.date, pnr:pnr, status:"Confirmed"};
+      $("modalRoot").innerHTML="";
+      toast("Booking confirmed · PNR "+pnr);
+      renderManage();
+      showConfirmation(r,pnr,inp.date);
+    };
+  }
+
+  function makePNR(){
+    var c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s="";
+    for(var i=0;i<6;i++) s+=c[Math.floor(Math.random()*c.length)];
+    return s;
+  }
+  function fmtDate(iso){
+    if(!iso) return "—";
+    var d=new Date(iso+"T00:00:00");
+    if(isNaN(d)) return iso;
+    return d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+  }
+
+  function showConfirmation(r,pnr,date){
+    var host=$("results");
+    var box=el("div","banner ok");
+    box.innerHTML = "<b>Booking confirmed (simulated).</b> PNR <span class='kbd'>"+pnr+"</span> · "+routeTitle(r)+" · "+fmtDate(date)+" · "+inr(r.total)+". "+
+      "Head to <b>Manage trip</b> to test delays and cancellations.";
+    host.insertBefore(box, host.firstChild);
+  }
+
+  function renderManage(){
+    var active=state.booking;
+    if(!active){
+      $("manageEmpty").classList.remove("hidden");
+      $("manageActive").classList.add("hidden");
+      return;
+    }
+    $("manageEmpty").classList.add("hidden");
+    $("manageActive").classList.remove("hidden");
+    var r=active.route;
+    var host=$("activeTrip"); host.innerHTML="";
+    host.appendChild(el("div","route-title",routeTitle(r)+' <span class="chip">'+active.status+"</span>"));
+    host.appendChild(el("div","meta","PNR "+active.pnr+" · "+fmtDate(active.date)+" · "+inr(r.total)));
+    r.path.forEach(function(leg){
+      var e=leg.edge;
+      var disrupted = state.disruptedEdge && state.disruptedEdge.key===edgeKey(e) && state.disruptedEdge.disabled;
+      var row=el("div","leg");
+      row.innerHTML = modeBadge(e.mode)+" <b>"+cityName(leg.from)+" \u2192 "+cityName(leg.to)+"</b> <span class='meta'>"+e.op+"</span> <span class='meta' style='margin-left:auto'>"+dur(e.min)+" · "+inr(e.fee)+"/person</span>"+(disrupted?" <span class='chip' style='border-color:var(--danger);color:var(--danger)'>DISRUPTED</span>":"");
+      host.appendChild(row);
+    });
+  }
+
+  function disrupt(kind){
+    if(!state.booking){ toast("No active trip to disrupt."); return; }
+    var r=state.booking.route;
+    var leg=r.path[Math.floor(r.path.length/2)];
+    state.disruptedEdge={key:edgeKey(leg.edge), disabled:true, kind:kind};
+    var modeLabel=kind==="delay"?"delayed":"cancelled";
+    state.booking.status = kind==="delay"?"Delayed":"Cancelled";
+    renderManage();
+    var fromKey=r.path[0].from, toKey=r.path[r.path.length-1].to;
+    var paths=findPaths(fromKey,toKey);
+    var ranked=rankRoutes(paths, $("pref").value, r.pax, 0);
+    $("disruptionBanner").innerHTML =
+      "<div class='banner danger'><b>"+modeLabel+" leg detected.</b> "+leg.edge.op+" ("+cityName(leg.from)+" \u2192 "+cityName(leg.to)+") is "+modeLabel+". "+
+      "The assistant removed it and re-searched the network.</div>";
+    $("altSub").textContent = ranked.length+" alternative route"+(ranked.length>1?"s":"")+" for "+cityName(fromKey)+" \u2192 "+cityName(toKey)+".";
+    renderAlternatives(ranked, kind);
+  }
+
+  function renderAlternatives(ranked, kind){
+    var host=$("alternatives"); host.innerHTML="";
+    if(!ranked.length){
+      host.appendChild(el("div","banner warn","No alternative found in the demo network. In production the assistant would call airlines/rail APIs and offer a voucher."));
+      return;
+    }
+    ranked.slice(0,3).forEach(function(r,i){
+      var card=el("div","route"+(i===0?" best":""));
+      var head=el("div","route-head");
+      head.appendChild(el("div","route-title",routeTitle(r)+(i===0?' <span class="chip">Fastest recovery</span>':"")));
+      var sc=el("div","score");
+      sc.appendChild(el("div","n "+scoreClass(r.score),String(r.score)));
+      sc.appendChild(el("div","l","Safety"));
+      head.appendChild(sc);
+      card.appendChild(head);
+      card.appendChild(el("div","meta",dur(r.min)+" · "+inr(r.fee)+"/person · Total "+inr(r.total)));
+      var acts=el("div","actions");
+      var reb=el("button","btn","Rebook this route");
+      reb.onclick=function(){
+        state.booking.route=r;
+        state.booking.status="Rebooked";
+        state.booking.pnr=makePNR();
+        state.disruptedEdge=null;
+        $("disruptionBanner").innerHTML="<div class='banner ok'>Rebooked on "+routeTitle(r)+". New PNR <span class='kbd'>"+state.booking.pnr+"</span>.</div>";
+        renderManage();
+        toast("Rebooked · PNR "+state.booking.pnr);
+      };
+      acts.appendChild(reb);
+      card.appendChild(acts);
+      host.appendChild(card);
+    });
+  }
+
+  function clearTrip(){
+    state.booking=null; state.disruptedEdge=null;
+    $("disruptionBanner").innerHTML="";
+    $("alternatives").innerHTML="";
+    $("altSub").textContent="Alternatives appear here after a disruption.";
+    renderManage();
+    toast("Trip cleared.");
+  }
+
+  function buildChecklist(){
+    var items=[
+      "Bookmarked official airline/rail booking site (avoid look-alike domains).",
+      "Enabled two-factor authentication on your email and travel apps.",
+      "Shared your itinerary with a trusted contact.",
+      "Saved offline copies of tickets and ID documents.",
+      "Charged your phone and packed a power bank.",
+      "Verified the operator's licence/registration for cabs and stays."
+    ];
+    var host=$("checklist"); host.innerHTML="";
+    items.forEach(function(t){
+      var l=el("label");
+      var cb=document.createElement("input"); cb.type="checkbox";
+      cb.onchange=updateChecklist;
+      l.appendChild(cb); l.appendChild(document.createTextNode(t));
+      host.appendChild(l);
+    });
+    updateChecklist();
+  }
+  function updateChecklist(){
+    var boxes=$("checklist").querySelectorAll("input");
+    var done=0, total=boxes.length;
+    boxes.forEach(function(b){ if(b.checked) done++; });
+    var pct=Math.round(done/total*100);
+    var out=$("checklistOut");
+    out.className="banner "+(pct===100?"ok":(pct>=50?"":"warn"));
+    out.textContent = pct+"% ready ("+done+"/"+total+"). "+(pct===100?"You're good to go — travel safe.":"Complete the remaining items before departure.");
+  }
+
+  function buildAdvisories(){
+    var host=$("advisories"); host.innerHTML="";
+    var list=[];
+    var night=isNightDeparture();
+    list.push(night
+      ? "It's late where you are: prefer well-lit stations/airports and pre-book verified cabs."
+      : "Daytime travel: carry a charged phone and keep emergency numbers on speed dial.");
+    list.push("Never share OTPs or card details over calls claiming to be from your airline or hotel.");
+    list.push("If a booking fails, re-verify the URL before retrying — demo apps often show a certificate warning when a site is impersonated.");
+    if(state.booking){
+      var lastLeg=state.booking.route.path[state.booking.route.path.length-1];
+      list.push("Active trip "+state.booking.pnr+": keep trip sharing on until you reach "+cityName(lastLeg.to)+".");
+    }
+    list.forEach(function(t){
+      host.appendChild(el("div","banner",t));
+    });
+  }
+
+  function doSOS(){
+    var geo = "location: not shared";
+    var out=$("sosOut");
+    out.innerHTML="<div class='banner danger'>Sending alert to trusted contacts…</div>";
+    var finish=function(loc){
+      var tripTxt = state.booking ? ("Active trip "+state.booking.pnr+" ("+routeTitle(state.booking.route)+")") : "No active trip";
+      out.innerHTML =
+        "<div class='banner danger'><b>SOS sent (simulated).</b> Alerted Aarti and Rahul with your details.</div>"+
+        "<div class='banner'>"+tripTxt+"<br>"+loc+"</div>";
+      toast("SOS simulated — contacts notified.");
+    };
+    if(navigator.geolocation){
+      navigator.geolocation.getCurrentPosition(
+        function(pos){ finish("location: "+pos.coords.latitude.toFixed(4)+", "+pos.coords.longitude.toFixed(4)); },
+        function(){ finish("location: denied/unavailable"); },
+        {timeout:4000}
+      );
+    } else {
+      finish(geo);
+    }
+  }
+
+  function shareTrip(){
+    var id="SR-"+makePNR().slice(0,4);
+    var txt = state.booking ? routeTitle(state.booking.route) : "No active trip yet";
+    $("shareOut").innerHTML =
+      "<div class='banner ok'>Live link created: <span class='kbd'>https://saferoute.local/t/"+id+"</span></div>"+
+      "<div class='banner'>Sharing: "+txt+" · updates every few minutes until you arrive. "+
+      "(Simulated — this app makes no network calls.)</div>";
+    toast("Share link ready: "+id);
+  }
+
+  function toast(msg){
+    var t=el("div","toast",msg);
+    $("toastRoot").appendChild(t);
+    setTimeout(function(){ t.remove(); }, 3200);
+  }
+
+  function doUnderstand(){
+    var text=$("nl").value;
+    if(!text.trim()){ toast("Type a request or press 'Try an example'."); return; }
+    var p=parseRequest(text);
+    if(p.from) $("from").value=p.from;
+    if(p.to) $("to").value=p.to;
+    if(p.date) $("when").value=p.date;
+    if(p.pax) $("pax").value=p.pax;
+    if(p.budget) $("budget").value=p.budget;
+    if(p.pref) $("pref").value=p.pref;
+    renderUnderstanding(p,text);
+  }
+
+  function renderUnderstanding(p,text){
+    $("understanding").classList.remove("hidden");
+    $("assistantEmpty").classList.add("hidden");
+    $("assistantPanel").classList.remove("hidden");
+
+    var from=cityName($("from").value), to=cityName($("to").value);
+    $("aiRoute").textContent=from+" \u2192 "+to;
+    $("aiDate").textContent=$("when").value?fmtDate($("when").value):"not specified";
+    $("aiPax").textContent=$("pax").value;
+    $("aiBudget").textContent=$("budget").value?inr(parseInt($("budget").value,10)):"not specified";
+    $("aiPref").textContent=prefLabel($("pref").value);
+
+    var chips=[];
+    if(p.from) chips.push("<b>From</b> "+cityName(p.from));
+    if(p.to) chips.push("<b>To</b> "+cityName(p.to));
+    if(p.pref) chips.push("<b>Priority</b> "+p.pref);
+    if(p.budget) chips.push("<b>Budget</b> "+inr(p.budget));
+    if(p.pax) chips.push("<b>Travellers</b> "+p.pax);
+    if(p.date) chips.push("<b>Date</b> "+fmtDate(p.date));
+    if(!chips.length) chips.push("No travel intent detected — try 'from Delhi to Goa'.");
+    $("understandingChips").innerHTML=chips.map(function(c){return "<span class='chip'>"+c+"</span>";}).join("");
+    $("understandingText").innerHTML="Understood your request. Fields were pre-filled below — review, then plan.";
+
+    var notes=[];
+    if(!p.from && !p.to) notes.push("Couldn't detect cities; pick them manually.");
+    if(p.budget) notes.push("I'll flag options over "+inr(p.budget)+".");
+    if(p.pref==="safest") notes.push("Prioritising safety score over cost/time.");
+    $("aiNotes").style.display = notes.length?"block":"none";
+    $("aiNotes").textContent = notes.join(" ");
+  }
+
+  function tryExample(){
+    var examples=[
+      "I need a safe and cheap trip from Delhi to Mumbai next weekend for 2 people under 6000",
+      "Fastest way from Bengaluru to Chennai tomorrow",
+      "Safest route from Delhi to Goa for 3 travellers",
+      "Cheap trip from Mumbai to Pune with budget 3000"
+    ];
+    $("nl").value=examples[Math.floor(Math.random()*examples.length)];
+    doUnderstand();
+  }
+
+  function switchTab(name){
+    document.querySelectorAll(".tab").forEach(function(t){
+      t.classList.toggle("active", t.dataset.tab===name);
+    });
+    document.querySelectorAll(".tabpane").forEach(function(p){
+      p.classList.toggle("hidden", p.id!=="tab-"+name);
+    });
+    if(name==="safety"){ buildAdvisories(); }
+    if(name==="manage"){ renderManage(); }
+  }
+
+  function tickClock(){
+    var d=new Date();
+    $("clock").textContent=d.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit"});
+  }
+
+  function init(){
+    fillSelects();
+    $("when").value=addDays(3);
+    tickClock(); setInterval(tickClock,30000);
+    buildChecklist();
+
+    document.querySelectorAll(".tab").forEach(function(t){
+      t.onclick=function(){ switchTab(t.dataset.tab); };
+    });
+    $("understandBtn").onclick=doUnderstand;
+    $("exampleBtn").onclick=tryExample;
+    $("planBtn").onclick=planTrip;
+    $("delayBtn").onclick=function(){ disrupt("delay"); };
+    $("cancelBtn").onclick=function(){ disrupt("cancel"); };
+    $("clearTripBtn").onclick=clearTrip;
+    $("sosBtn").onclick=doSOS;
+    $("shareBtn").onclick=shareTrip;
+
+    $("nl").addEventListener("keydown",function(e){
+      if((e.ctrlKey||e.metaKey)&&e.key==="Enter") doUnderstand();
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
+</html>
