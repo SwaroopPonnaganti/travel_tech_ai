@@ -83,6 +83,23 @@
   deadline compliance, data freshness) plus sorting/filtering and a prominent **simulated-data**
   banner. Reached from the planner via `Find options` (route `/itineraries`).
 
+### Disruption simulator (simulated)
+- `src/lib/disruption.ts` — `simulateDisruption(original, plan, kind, options)`. Injects one simulated
+  disruption (**bus delay**, **bus cancellation**, **missed connection**, **unavailable last-mile
+  transport**), identifies the affected leg, perturbs the connection pool (shift the delayed leg, remove
+  the cancelled/missed/unavailable leg, delay the preceding leg for a missed connection) and asks the
+  **real** `planItineraries` engine to recalculate the remaining journey from the resume city. The
+  recovered legs are composed back onto the untouched prefix with `assembleItinerary` and re-checked
+  against the original deadline, budget and comfort constraints. Returns per-option extra cost, arrival
+  delay, deadline/budget status, trade-off bullets and a clear **no-alternative** result. `servicePool`,
+  `shiftConnection` and `assembleItinerary` are exported from `itinerary.ts` for reuse — no recovery
+  option is hard-coded.
+- `src/pages/DisruptionSimulatorPage.tsx` — scenario controls (journey selector, disruption-type radio
+  group, delay length, affected leg), visible **Simulate Disruption** and **Reset** buttons, affected-leg
+  panel, impact summary, an original-vs-revised comparison table and recalculated option cards (reusing
+  `PlannedItineraryCard`). Route `/simulator`, nav item "Disruption Simulator", linked from Disruption
+  Management. Every event/status is badged **Simulated**.
+
 ### State
 - `SettingsContext` — language + accessibility, persisted to `localStorage`, applied to `<html>`.
 - `TripsContext` — in-memory trip store (bookings, cancellations, status changes).
@@ -113,6 +130,7 @@ travel-assistant/
     ├── config/nav.ts          # navigation model
     ├── lib/                   # types, format, intent, planner, llm, compare, chat, api, i18n, mock, cn
     │                          # + connections (simulated dataset) + itinerary (route engine)
+    │                          # + disruption (simulated what-if recovery)
     ├── state/                 # SettingsContext, TripsContext
     ├── components/
     │   ├── layout/AppShell.tsx
@@ -121,7 +139,7 @@ travel-assistant/
     │   ├── ItineraryCard.tsx
     │   ├── TransportIcon.tsx
     │   └── LiveRegion.tsx
-    ├── pages/                 # one file per feature screen (incl. ItineraryResultsPage.tsx)
+    ├── pages/                 # one file per feature screen (incl. ItineraryResultsPage.tsx, DisruptionSimulatorPage.tsx)
     └── test/setup.ts          # Vitest jsdom setup
 ```
 
