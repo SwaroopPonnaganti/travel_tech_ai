@@ -14,6 +14,7 @@ on the backend. Icons by **lucide-react**, tests by **Vitest**.
 - **Trip Search** — validated form, loading skeletons, graceful live-API fallback, ranked results.
 - **Itinerary Comparison** — compare up to 3 options with a weighted score and winner highlight.
 - **Disruption Management** — severity filters, simulate/recover actions, ranked alternatives.
+- **Disruption Simulator** — inject a **simulated** bus delay, cancellation, missed connection or unavailable last-mile transport; RoamAgent recalculates the remaining journey with the real planning engine and compares original vs revised (extra cost, delay, deadline/budget re-checks, trade-offs). Simulate/Reset controls; all events and options are simulated.
 - **My Trips** — status tabs, details, check-in and cancellation flows.
 - **Booking Review** — dynamic traveller forms, fare breakdown, confirmation with PNR.
 - **Settings** — language (EN/HI/TE/TA/ES) and accessibility (text size, contrast, motion, announcements).
@@ -84,6 +85,10 @@ fares, seat counts and availability are hand-authored sample data — **not live
 are labelled "Simulated" throughout the UI. The engine (`src/lib/itinerary.ts`) is deterministic and
 unit-tested; no external transport APIs are called.
 
+The **Disruption Simulator** (`src/lib/disruption.ts`) builds on the same dataset: it perturbs the
+connection graph for a chosen simulated disruption and re-runs the real `planItineraries` engine to
+recalculate the remaining journey. Every disruption event and recovery option is simulated.
+
 ## Project structure
 
 ```
@@ -100,5 +105,5 @@ prototype/  original single-file SafeRoute prototype (preserved)
 ## Roadmap
 - **Phase 1 ✅** Frontend: 8 screens, UI kit, intent/compare/chat engine, tests, docs.
 - **Phase 2 🚧** Backend: Express + SQLite API, persist bookings/cancellations, server-side agent.
-- **Phase 3 🚧** Agentic: ✅ **Conversational Trip Planner** (EN/Telugu extraction, follow-ups, LLM with rule fallback); ✅ **Itinerary-planning engine** (simulated graph search, constraint validation, labelled alternatives); LLM tool-calling agent, proactive watchers.
+- **Phase 3 🚧** Agentic: ✅ **Conversational Trip Planner** (EN/Telugu extraction, follow-ups, LLM with rule fallback); ✅ **Itinerary-planning engine** (simulated graph search, constraint validation, labelled alternatives); ✅ **Disruption Simulator** (simulated what-if recovery via the same engine); LLM tool-calling agent, proactive watchers.
 - **Phase 4 ⏳** Auth, payments, E2E tests.
