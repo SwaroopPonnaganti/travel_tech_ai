@@ -56,6 +56,12 @@ describe("App routing", () => {
     expect(screen.getByText(/simulated demonstration data/i)).toBeInTheDocument();
   });
 
+  it("renders the disruption simulator", () => {
+    renderAt("/simulator");
+    expect(screen.getByRole("heading", { name: /disruption simulator/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /simulate disruption/i })).toBeInTheDocument();
+  });
+
   it("shows a not found page for unknown routes", () => {
     renderAt("/does-not-exist");
     expect(screen.getByText(/lost in transit/i)).toBeInTheDocument();
