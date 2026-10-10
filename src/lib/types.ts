@@ -154,3 +154,132 @@ export interface AgentStatus {
   model: string | null;
   provider: string | null;
 }
+
+// ── Route-planning engine (simulated transport graph) ────────────────────────
+
+export type AvailabilityStatus = "available" | "limited" | "sold-out";
+
+export type TransferRisk = "none" | "low" | "medium" | "high";
+
+/**
+ * One scheduled transport service — an edge in the route graph.
+ * Every row in the fixed demonstration dataset is simulated.
+ */
+export interface Connection {
+  id: string;
+  mode: TransportMode;
+  operator: string;
+  code: string;
+  from: string;
+  to: string;
+  fromStop: string;
+  toStop: string;
+  /** ISO local datetime without timezone suffix, e.g. 2026-10-18T20:30:00. */
+  depart: string;
+  arrive: string;
+  durationMin: number;
+  /** Fare per passenger in INR. */
+  fare: number;
+  availability: AvailabilityStatus;
+  seatsLeft: number | null;
+  comfort: CoachClass | "standard";
+  accessible: string[];
+  luggageCabin: number;
+  luggageChecked: number;
+  amenities: string[];
+  /** True for every row in the fixed demonstration dataset. */
+  simulated: true;
+  source: string;
+  updatedAt: string;
+}
+
+/** The waiting period between two connections of one itinerary. */
+export interface Transfer {
+  location: string;
+  waitMin: number;
+  risk: TransferRisk;
+  stationChange: boolean;
+  fromMode: TransportMode;
+  toMode: TransportMode;
+}
+
+/** A feasible (or near-feasible) end-to-end journey assembled from connections. */
+export interface PlannedItinerary {
+  id: string;
+  from: string;
+  to: string;
+  date: string;
+  connections: Connection[];
+  transfers: Transfer[];
+  depart: string;
+  arrive: string;
+  /** Sum of in-vehicle travel time. */
+  travelDurationMin: number;
+  /** Door-to-door time including transfer waits. */
+  totalDurationMin: number;
+  /** Fare per passenger. */
+  fare: number;
+  /** Fare for every passenger, scaled by the requested party size. */
+  totalFare: number;
+  passengers: number;
+  legs: number;
+  modes: TransportMode[];
+  comfort: string;
+  transferRisk: TransferRisk;
+  meetsArrivalDeadline: boolean;
+  /** Minutes early (positive) or late (negative) against the arrival deadline. */
+  arrivalSlackMin: number | null;
+  /** Relative ranking score, higher is better. */
+  score: number;
+  simulated: true;
+  source: string;
+  updatedAt: string;
+  tags: string[];
+  /** Preference relaxations — non-empty means this is a labelled alternative. */
+  relaxations: string[];
+}
+
+export interface PlanRejection {
+  connectionIds: string[];
+  reason: string;
+}
+
+export interface DatasetInfo {
+  label: string;
+  simulated: true;
+  updatedAt: string;
+  note: string;
+}
+
+export interface PlanResult {
+  feasible: PlannedItinerary[];
+  alternatives: PlannedItinerary[];
+  rejections: PlanRejection[];
+  /** Human-readable explanation, always present. */
+  explanation: string;
+  simulated: true;
+  generatedAt: string;
+  dataset: DatasetInfo;
+}
+
+export type ItinerarySort = "recommended" | "price" | "duration" | "arrival" | "departure" | "transfers";
+
+export interface ItineraryFilters {
+  maxPrice: number | null;
+  maxDurationMin: number | null;
+  modes: TransportMode[];
+  coachClass: CoachClass | null;
+  deadlineOnly: boolean;
+  directOnly: boolean;
+  availabilityOnly: boolean;
+}
+
+export const DEFAULT_ITINERARY_FILTERS: ItineraryFilters = {
+  maxPrice: null,
+  maxDurationMin: null,
+  modes: [],
+  coachClass: null,
+  deadlineOnly: false,
+  directOnly: false,
+  availabilityOnly: false,
+};
