@@ -10,6 +10,7 @@ on the backend. Icons by **lucide-react**, tests by **Vitest**.
 - **Dashboard** — KPIs, next trip, disruption radar, spend trend, activity feed.
 - **AI Travel Chat** — natural-language requests parsed into origin/destination/date/budget/priority with grounded recommendations.
 - **Trip Planner** — describe a trip in English or Telugu and get an editable structured plan; follow-up questions fill the gaps, with optional server-side LLM extraction (rule fallback when no key).
+- **Itinerary Planning** — a graph-search engine builds feasible multi-leg journeys from a fixed **simulated** connection dataset (Visakhapatnam ↔ Hyderabad and more), validates deadlines/budget/transfers/preferences, rejects impossible connections with reasons, and shows labelled alternatives. Sort/filter by price, duration and arrival time. All schedules/fares/availability are simulated.
 - **Trip Search** — validated form, loading skeletons, graceful live-API fallback, ranked results.
 - **Itinerary Comparison** — compare up to 3 options with a weighted score and winner highlight.
 - **Disruption Management** — severity filters, simulate/recover actions, ranked alternatives.
@@ -75,6 +76,14 @@ export ROAMAGENT_LLM_MODEL=gpt-4o-mini
 
 Without a key, `POST /api/agent/plan` returns `501` and the client falls back to the rule parser.
 
+## Simulated itinerary data
+
+The Itinerary Planning engine runs entirely on a **fixed demonstration dataset** of scheduled bus
+services (`src/lib/connections.ts`) covering Visakhapatnam ↔ Hyderabad and other corridors. Times,
+fares, seat counts and availability are hand-authored sample data — **not live transport data** — and
+are labelled "Simulated" throughout the UI. The engine (`src/lib/itinerary.ts`) is deterministic and
+unit-tested; no external transport APIs are called.
+
 ## Project structure
 
 ```
@@ -91,5 +100,5 @@ prototype/  original single-file SafeRoute prototype (preserved)
 ## Roadmap
 - **Phase 1 ✅** Frontend: 8 screens, UI kit, intent/compare/chat engine, tests, docs.
 - **Phase 2 🚧** Backend: Express + SQLite API, persist bookings/cancellations, server-side agent.
-- **Phase 3 🚧** Agentic: ✅ **Conversational Trip Planner** (EN/Telugu extraction, follow-ups, LLM with rule fallback); LLM tool-calling agent, proactive watchers.
+- **Phase 3 🚧** Agentic: ✅ **Conversational Trip Planner** (EN/Telugu extraction, follow-ups, LLM with rule fallback); ✅ **Itinerary-planning engine** (simulated graph search, constraint validation, labelled alternatives); LLM tool-calling agent, proactive watchers.
 - **Phase 4 ⏳** Auth, payments, E2E tests.
