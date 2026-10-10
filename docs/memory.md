@@ -6,15 +6,19 @@
 
 ### Current focus
 - **Phase 1 (frontend) is complete and passing all checks.**
-- Phase 3 has a conversational Trip Planner and a simulated **itinerary-planning engine** (graph search
-  over a fixed connection dataset, constraint validation, labelled alternatives).
-- Phase 2 (backend) has a working Express + SQLite scaffold; next up is persisting bookings,
-  cancellations and disruption recovery, and moving the intent/compare engine server-side.
+- Phase 3 has a conversational Trip Planner, a simulated **itinerary-planning engine** (graph search
+  over a fixed connection dataset, constraint validation, labelled alternatives) and a simulated
+  **disruption simulator**.
+- Phase 2 (backend) now **persists simulated bookings** (`bookings` table + API) and wires Booking
+  Review, My Trips and the in-app notification centre to the live API with an offline demo fallback.
+  Still to do: move the intent/compare/chat engine server-side and persist disruption recovery.
 
 ### Files most recently worked on
-- `src/lib/connections.ts`, `src/lib/itinerary.ts` — simulated dataset + route-planning engine.
-- `src/components/planner/PlannedItineraryCard.tsx`, `src/pages/ItineraryResultsPage.tsx` — results UI.
-- `src/config/nav.ts`, `src/App.tsx`, `src/pages/TripPlannerPage.tsx` — planner → engine hand-off.
+- `src/lib/bookings.ts`, `src/lib/bookingsApi.ts`, `src/lib/notifications.ts` — booking + notification domain.
+- `src/state/BookingsContext.tsx`, `src/state/NotificationsContext.tsx` — API-backed providers.
+- `src/pages/BookingReviewPage.tsx`, `src/pages/MyTripsPage.tsx` — booking + trips UI.
+- `src/components/notifications/NotificationCenter.tsx`, `src/components/layout/AppShell.tsx` — bell/panel.
+- `server/db.ts`, `server/index.ts`, `server/seed.ts` — bookings table, routes and seeds.
 - `docs/*` — PRD, architecture, rules, phases, design, memory.
 
 ---
@@ -121,6 +125,45 @@
   transfer feasibility, no-alternative, deadline/budget re-checks), `src/pages/DisruptionSimulatorPage.test.tsx`
   (3), plus a new `/simulator` routing test in `App.test.tsx`.
 
+### Simulated booking workflow (new)
+- **Domain** — `src/lib/types.ts`: `BookingStatus`, `FareBreakdown`, `BookingItinerary`, `Booking`,
+  `CreateBookingInput`, plus notification types (`NotificationChannel`, `NotificationKind`,
+  `AppNotification`).
+- **Logic** — `src/lib/bookings.ts`: `computeFare` (base + 12% taxes + add-ons − 5% refundable discount),
+  `validateBookingInput`, `assertConfirmed`, `generateBookingRef` (`TBS-####`, collision-safe),
+  `seatForPreference`, `bookingItineraryFromPlanned` / `bookingItineraryFromLegacy` /
+  `normalizeToBookingItinerary`, `buildLocalBooking`, `bookingToTrip`, `demoBooking` and `seedBookings`.
+- **API client** — `src/lib/bookingsApi.ts`: `fetchBookings`, `createBookingRequest`, `cancelBookingRequest`.
+- **Backend** — `server/db.ts` gained a `bookings` table (ref unique, itinerary/passengers JSON, fare
+  columns, assumptions, consent, timestamps), `BookingError` (status + field errors), `listBookings`,
+  `getBookingByRef`, `createBooking`, `cancelBooking`, and a `ROAMAGENT_DB_PATH` override (tests use
+  `:memory:`). `server/seed.ts` seeds 4 trips + derived bookings; `server/index.ts` adds
+  `GET /api/bookings`, `GET /api/bookings/:ref`, `POST /api/bookings` and
+  `POST /api/bookings/:ref/cancel`. **Create/cancel return 400 without `confirmed: true`.**
+- **State** — `src/state/BookingsContext.tsx` (`useBookings`) replaced the old in-memory
+  `TripsContext` (deleted). API-backed with `seedBookings()` fallback; `trips` provides a
+  legacy-compatible `Trip[]` view. Client 4xx errors propagate; transient failures use a local booking.
+- **UI** — `src/pages/BookingReviewPage.tsx` (full journey + fare + traveller form, explicit confirmation
+  modal before saving, success screen with the generated reference and assumptions) and
+  `src/pages/MyTripsPage.tsx` (saved bookings, status filters, disruption alerts, suggested alternatives,
+  detail modal, check-in, confirm-guarded cancellation). `ItineraryResultsPage` `onSelect` → `/booking`;
+  `Dashboard` reads bookings via `useBookings`.
+- **Tests** — `src/lib/bookings.test.ts` (16), `server/bookings.test.ts` (6, node `:memory:` DB),
+  `src/pages/BookingReviewPage.test.tsx` (4 — proves **no POST before confirmation** and blocked invalid
+  submits), `src/pages/MyTripsPage.test.tsx` (2 — cancellation requires confirmation), plus updated
+  `App.test.tsx` providers/fetch stub.
+
+### Notification centre (new, simulated)
+- **Types/lib** — `src/lib/notifications.ts`: `notificationFromBooking`, `notificationFromCancellation`,
+  `seedNotifications`. **State** — `src/state/NotificationsContext.tsx` (`useNotifications`): notifications,
+  unread count, persisted consent (`roamagent.notify.consent`), `markRead`/`markAllRead`,
+  `previewDelivery` (returns false without consent).
+- **UI** — `src/components/notifications/NotificationCenter.tsx`: `NotificationBell` (unread badge) + a
+  slide-over panel with consent toggle and per-item simulated delivery previews (email / SMS / push).
+  Wired into `AppShell` (desktop sidebar + mobile header).
+- **Tests** — `src/components/notifications/NotificationCenter.test.tsx` (2 — panel content + delivery
+  gated behind consent). **No real messages are sent.**
+
 ### Documentation
 - `docs/PRD.md`, `docs/architecture.md`, `docs/rules.md`, `docs/phases.md`, `docs/design.md`,
   `docs/memory.md`.
@@ -131,9 +174,10 @@
 |---|---|---|
 | Types | `npm run typecheck` | ✅ pass |
 | Lint | `npm run lint` | ✅ pass |
-| Tests | `npm test` | ✅ 115 passed (13 files) |
+| Tests | `npm test` | ✅ 146 passed (18 files) |
 | Build | `npm run build` | ✅ pass (dist generated) |
 | API | `curl localhost:4000/api/health` | ✅ ok |
+| Bookings API | `curl localhost:4000/api/bookings` | ✅ seeded bookings |
 | Agent status | `curl localhost:4000/api/agent/status` | ✅ `llmConfigured:false` |
 | Agent plan (no key) | `curl -X POST localhost:4000/api/agent/plan` | ✅ 501 fallback |
 | Itineraries page | `curl localhost:5173/itineraries` | ✅ 200 (SPA) |
@@ -151,10 +195,11 @@ npm run dev:api      # backend only
 Then open http://localhost:5173
 
 ## Next session (Phase 2/3)
-1. `POST /api/bookings` + cancel endpoint; wire Booking Review and My Trips to persist via API.
-2. Move intent/compare/chat into `server/` services and have `/api/chat` use them.
-3. Add API integration tests and seed reset script.
+1. Move intent/compare/chat into `server/` services and have `/api/chat` use them.
+2. Persist disruption generation + recovery actions via the API.
+3. Add a seed reset script and broaden API integration coverage.
 4. Set `ROAMAGENT_LLM_API_KEY` and verify a live LLM plan end-to-end (currently 501 → rule fallback).
 5. Persist the simulated connection dataset behind `GET /api/connections` and let the engine fetch it,
    keeping the bundled dataset as the offline fallback.
-6. Update this file and commit.
+6. Add proactive price-drop / disruption watchers feeding the notification centre.
+7. Update this file and commit.
