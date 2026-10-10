@@ -43,33 +43,49 @@ proposes actions instead of only displaying data.
 - Hand-off: parsed request can be sent straight into Trip Search.
 - Typing indicator, message history, clear-chat, error states.
 
-### F3 — Trip Search
+### F3 — Conversational Trip Planner
+- Free-text → structured plan: describe the trip in one message (English **or** Telugu) and get an
+  editable structured form.
+- Extracts: origin, destination, departure date, preferred time window / clock time, required arrival
+  date/time, passengers, max budget, seater/sleeper, accessibility + luggage needs, first- and
+  last-mile requirements.
+- Follow-up questions for missing essentials (origin, destination, date, passengers) — **never invents
+  a date or travel requirement**.
+- Editable grouped form with per-field validation, "auto-filled" provenance badges, confidence and
+  LLM / on-device source indicator.
+- LLM extraction only via the server-side proxy (`ROAMAGENT_LLM_API_KEY`); unconfigured → 501 →
+  deterministic rule fallback so the UI never blocks.
+- Telugu input support: postposition reordering, city/keyword/numeral translation.
+- Hand-off to Trip Search pre-filled with the extracted route, date, travellers and budget.
+- Reset, accessibility chips (wheelchair / senior / infant / …), cabin+checked luggage counters.
+
+### F4 — Trip Search
 - Form: from, to, date, priority, travellers, budget.
 - Client + server validation with inline error messages.
 - Loading skeletons, empty state, demo/live data badge, graceful API fallback.
 
-### F4 — Itinerary Comparison
+### F5 — Itinerary Comparison
 - Select up to 3 itineraries.
 - Side-by-side table: fare, travel time, stops, safety, on-time record, weighted score.
 - Priority selector (Balanced / Cheapest / Fastest / Safest) re-ranks and highlights a winner with reasons.
 
-### F5 — Disruption Management
+### F6 — Disruption Management
 - Active / all / resolved filters.
 - Severity classification (info, warning, critical) and category icons (delay, cancellation, weather, strike).
 - Simulate delay/cancellation, accept recovery, dismiss.
 - Suggested alternatives ranked by safety.
 
-### F6 — My Trips
+### F7 — My Trips
 - Status tabs (all, upcoming, completed, cancelled).
 - Trip cards with seats, dates, travellers; details modal; check-in flow.
 - Cancellation with confirmation modal and refund messaging.
 
-### F7 — Booking Review
+### F8 — Booking Review
 - Itinerary selector, dynamic traveller forms (1–9), contact email, seat preference, add-ons.
 - Fare breakdown: base, taxes, add-ons, refundable discount, total.
 - Terms acceptance, validation, submit with loading, confirmation screen with generated PNR.
 
-### F8 — Settings (language & accessibility)
+### F9 — Settings (language & accessibility)
 - Language: English, Hindi, Telugu, Tamil, Spanish (live UI translation).
 - Text size (S/M/L/XL), high-contrast mode, reduced motion, reduce transparency.
 - Currency and 12h/24h time format.
@@ -77,6 +93,6 @@ proposes actions instead of only displaying data.
 - Preferences persist in `localStorage` and apply via `<html>` data attributes.
 
 ## 4. Success metrics (hackathon)
-- All 8 screens functional and responsive (mobile → desktop).
+- All 9 screens functional and responsive (mobile → desktop).
 - Type check, lint, unit/integration tests and production build all pass.
 - End-to-end demo: chat → search → compare → booking → trip → disruption recovery.
