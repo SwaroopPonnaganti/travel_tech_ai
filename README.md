@@ -15,8 +15,9 @@ on the backend. Icons by **lucide-react**, tests by **Vitest**.
 - **Itinerary Comparison** — compare up to 3 options with a weighted score and winner highlight.
 - **Disruption Management** — severity filters, simulate/recover actions, ranked alternatives.
 - **Disruption Simulator** — inject a **simulated** bus delay, cancellation, missed connection or unavailable last-mile transport; RoamAgent recalculates the remaining journey with the real planning engine and compares original vs revised (extra cost, delay, deadline/budget re-checks, trade-offs). Simulate/Reset controls; all events and options are simulated.
-- **My Trips** — status tabs, details, check-in and cancellation flows.
-- **Booking Review** — dynamic traveller forms, fare breakdown, confirmation with PNR.
+- **My Trips** — saved **simulated** bookings with references, status filters, disruption alerts and suggested alternatives, details modal, check-in and confirm-guarded cancellation.
+- **Booking Review** — dynamic traveller forms, fare breakdown and a **confirmation step that must be accepted before anything is saved**; confirming stores a simulated booking (unique `TBS-####` demo reference) via the API.
+- **Notification centre** — in-app bell + slide-over panel with unread badge; notices generated from booking events with **consent-gated simulated** email/SMS/push previews (no real messages are sent).
 - **Settings** — language (EN/HI/TE/TA/ES) and accessibility (text size, contrast, motion, announcements).
 
 ## Tech stack
@@ -58,7 +59,11 @@ npm run preview      # preview the production build
 |---|---|---|
 | GET | `/api/health` | Service health |
 | GET | `/api/itineraries?from=&to=&maxPrice=` | Filtered inventory |
-| GET | `/api/trips` | Bookings |
+| GET | `/api/trips` | Seeded trip records |
+| GET | `/api/bookings` | Saved simulated bookings |
+| GET | `/api/bookings/:ref` | A single booking by reference |
+| POST | `/api/bookings` | Create a simulated booking (requires `confirmed: true`) |
+| POST | `/api/bookings/:ref/cancel` | Cancel a booking (requires `confirmed: true`) |
 | GET | `/api/disruptions` | Advisories / disruptions |
 | POST | `/api/chat` | Chat echo (agent engine wiring in Phase 2) |
 | GET | `/api/agent/status` | Is a server-side LLM configured? |
@@ -89,6 +94,14 @@ The **Disruption Simulator** (`src/lib/disruption.ts`) builds on the same datase
 connection graph for a chosen simulated disruption and re-runs the real `planItineraries` engine to
 recalculate the remaining journey. Every disruption event and recovery option is simulated.
 
+## Simulated bookings & notifications
+
+Bookings are simulated end to end: the Booking Review flow requires an explicit confirmation before
+`POST /api/bookings` persists a booking to SQLite with a unique `TBS-####` demo reference. **No payment
+is taken and no real reservation is made.** Cancellation is likewise confirm-guarded. The in-app
+notification centre generates notices from booking events; its email/SMS/push previews are simulated and
+gated behind an explicit consent toggle — **no real messages are ever sent**.
+
 ## Project structure
 
 ```
@@ -104,6 +117,6 @@ prototype/  original single-file SafeRoute prototype (preserved)
 
 ## Roadmap
 - **Phase 1 ✅** Frontend: 8 screens, UI kit, intent/compare/chat engine, tests, docs.
-- **Phase 2 🚧** Backend: Express + SQLite API, persist bookings/cancellations, server-side agent.
-- **Phase 3 🚧** Agentic: ✅ **Conversational Trip Planner** (EN/Telugu extraction, follow-ups, LLM with rule fallback); ✅ **Itinerary-planning engine** (simulated graph search, constraint validation, labelled alternatives); ✅ **Disruption Simulator** (simulated what-if recovery via the same engine); LLM tool-calling agent, proactive watchers.
+- **Phase 2 🚧** Backend: Express + SQLite API; ✅ persist simulated bookings/cancellations; server-side agent next.
+- **Phase 3 🚧** Agentic: ✅ **Conversational Trip Planner** (EN/Telugu extraction, follow-ups, LLM with rule fallback); ✅ **Itinerary-planning engine** (simulated graph search, constraint validation, labelled alternatives); ✅ **Disruption Simulator** (simulated what-if recovery via the same engine); ✅ **Notification centre** (in-app, consent-gated simulated previews); LLM tool-calling agent, proactive watchers next.
 - **Phase 4 ⏳** Auth, payments, E2E tests.
