@@ -1,7 +1,8 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
 import { SettingsProvider } from "./state/SettingsContext";
-import { TripsProvider } from "./state/TripsContext";
+import { BookingsProvider } from "./state/BookingsContext";
+import { NotificationsProvider } from "./state/NotificationsContext";
 import { Dashboard } from "./pages/Dashboard";
 import { ChatPage } from "./pages/ChatPage";
 import { TripPlannerPage } from "./pages/TripPlannerPage";
@@ -39,11 +40,13 @@ export function AppRoutes() {
 export default function App() {
   return (
     <SettingsProvider>
-      <TripsProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </TripsProvider>
+      <NotificationsProvider>
+        <BookingsProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </BookingsProvider>
+      </NotificationsProvider>
     </SettingsProvider>
   );
 }
