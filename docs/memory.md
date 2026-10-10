@@ -48,18 +48,42 @@
 - `server/index.ts` — `/api/health`, `/api/itineraries`, `/api/trips`, `/api/disruptions`, `/api/chat`.
 - Verified: web + API + Vite proxy all respond; `withFallback` shows "Live API" when the server is up.
 
+### Conversational Trip Planner (new)
+- **Domain** — `src/lib/types.ts`: `TripPlan` (origin, destination, departure date/window/time,
+  arrival date/time, passengers, max budget, coach class, accessibility, luggage, first/last mile),
+  `PlanExtraction`, `PlanValidation`, `AgentStatus`.
+- **Rule engine** — `src/lib/planner.ts`: English + Telugu free-text extraction. Telugu postpositions
+  (`నుండి` → "from", dative `కు/కి` → "to") are reordered before keyword/city translation; numerals,
+  cities, dates, time windows, budget, coach, accessibility, luggage and first/last-mile needs are
+  parsed. Also: `mergeTripPlan` (never overwrites user values), `sanitizeTripPlan` (coerces/drops
+  untrusted input), `validateTripPlan`, `missingFields`, `plannerQuestion`, `summarizePlan`.
+  **Never invents a date** — a missing date triggers a follow-up question instead.
+- **LLM bridge** — `src/lib/llm.ts` (client) + `server/llm.ts` (server-side provider). Key lives only
+  on the server (`ROAMAGENT_LLM_API_KEY` etc.); `/api/agent/status` reports config, `/api/agent/plan`
+  proxies the call and returns **501 when unconfigured** so the client falls back to the rule parser.
+- **UI** — `src/components/planner/TripPlanForm.tsx` (grouped, editable, auto-filled badges) and
+  `src/pages/TripPlannerPage.tsx` (chat transcript + examples + structured plan + follow-up banner +
+  hand-off to Trip Search). Route `/plan`, nav item "Trip Planner".
+- **i18n** — `nav.planner` (all 5 languages) and the full `planner.*` set in English + Telugu
+  (others fall back to English). Follow-up questions are English/Telugu.
+- **Tests** — `src/lib/planner.test.ts` (24), `src/lib/llm.test.ts` (7), `src/pages/TripPlannerPage.test.tsx` (3),
+  plus a new routing test in `App.test.tsx`.
+
 ### Documentation
 - `docs/PRD.md`, `docs/architecture.md`, `docs/rules.md`, `docs/phases.md`, `docs/design.md`,
   `docs/memory.md`.
+- `.env.example` — documents `PORT` and the optional `ROAMAGENT_LLM_*` variables.
 
 ## Verification (all green)
 | Check | Command | Result |
 |---|---|---|
 | Types | `npm run typecheck` | ✅ pass |
 | Lint | `npm run lint` | ✅ pass |
-| Tests | `npm test` | ✅ 40 passed (6 files) |
+| Tests | `npm test` | ✅ 75 passed (9 files) |
 | Build | `npm run build` | ✅ pass (dist generated) |
 | API | `curl localhost:4000/api/health` | ✅ ok |
+| Agent status | `curl localhost:4000/api/agent/status` | ✅ `llmConfigured:false` |
+| Agent plan (no key) | `curl -X POST localhost:4000/api/agent/plan` | ✅ 501 fallback |
 | Dev stack | `npm run dev` | ✅ web 5173 + api 4000 |
 
 ## How to run
@@ -72,8 +96,9 @@ npm run dev:api      # backend only
 ```
 Then open http://localhost:5173
 
-## Next session (Phase 2)
+## Next session (Phase 2/3)
 1. `POST /api/bookings` + cancel endpoint; wire Booking Review and My Trips to persist via API.
 2. Move intent/compare/chat into `server/` services and have `/api/chat` use them.
 3. Add API integration tests and seed reset script.
-4. Update this file and commit.
+4. Set `ROAMAGENT_LLM_API_KEY` and verify a live LLM plan end-to-end (currently 501 → rule fallback).
+5. Update this file and commit.
