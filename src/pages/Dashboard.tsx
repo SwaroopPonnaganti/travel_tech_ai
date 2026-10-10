@@ -15,28 +15,27 @@ import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
 import { EmptyState } from "../components/ui/EmptyState";
 import { ModeIcon } from "../components/TransportIcon";
-import { useTrips } from "../state/TripsContext";
+import { useBookings } from "../state/BookingsContext";
 import { useSettings } from "../state/SettingsContext";
-import { activityFeed, disruptions, itineraries, monthlySpend } from "../lib/mock";
+import { activityFeed, disruptions, monthlySpend } from "../lib/mock";
 import { formatDate, formatMoney, relativeTime } from "../lib/format";
-import { totalDuration } from "../lib/compare";
 
 const toneMap = { good: "teal", info: "navy", warn: "amber" } as const;
 const severityTone = { info: "navy", warning: "amber", critical: "rose" } as const;
 
 export function Dashboard() {
-  const { trips } = useTrips();
+  const { bookings } = useBookings();
   const { settings, t } = useSettings();
 
-  const upcoming = trips
-    .filter((trip) => trip.status === "upcoming" || trip.status === "in-progress")
-    .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  const upcoming = bookings
+    .filter((booking) => booking.status === "confirmed")
+    .sort((a, b) => a.itinerary.date.localeCompare(b.itinerary.date));
   const activeDisruptions = disruptions.filter((d) => !d.resolved);
-  const nextTrip = upcoming[0];
-  const nextItinerary = nextTrip ? itineraries.find((i) => i.id === nextTrip.itineraryId) : undefined;
-  const totalSpend = trips
-    .filter((trip) => trip.status !== "cancelled")
-    .reduce((sum, trip) => sum + trip.price, 0);
+  const nextBooking = upcoming[0];
+  const nextTrip = nextBooking?.itinerary;
+  const totalSpend = bookings
+    .filter((booking) => booking.status !== "cancelled")
+    .reduce((sum, booking) => sum + booking.fare.total, 0);
   const maxSpend = Math.max(...monthlySpend.map((m) => m.amount));
 
   return (
@@ -78,53 +77,56 @@ export function Dashboard() {
         <Card
           className="lg:col-span-2"
           title="Next trip"
-          subtitle={nextTrip ? nextTrip.ref : "No upcoming trips"}
+          subtitle={nextBooking ? nextBooking.ref : "No upcoming trips"}
           action={
-            nextTrip && (
+            nextBooking && (
               <Link to="/trips" className="text-sm font-medium text-teal-300 hover:text-teal-200">
                 View all
               </Link>
             )
           }
         >
-          {nextTrip && nextItinerary ? (
+          {nextBooking && nextTrip ? (
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-3">
                 <span className="grid h-11 w-11 place-items-center rounded-xl bg-teal-500/15 text-teal-200">
-                  <ModeIcon mode={nextItinerary.legs[0]!.mode} className="h-5 w-5" />
+                  <ModeIcon mode={nextTrip.legs[0]!.mode} className="h-5 w-5" />
                 </span>
                 <div className="min-w-0">
                   <p className="font-display text-lg font-semibold text-white">
                     {nextTrip.from} <ArrowRight className="inline h-4 w-4 text-teal-300" /> {nextTrip.to}
                   </p>
                   <p className="text-sm text-slate-400">
-                    {formatDate(nextTrip.startDate, settings.language)} · {nextTrip.travellers} travellers · {nextTrip.seat}
+                    {formatDate(nextTrip.date, settings.language)} · {nextBooking.travellers} travellers · {nextBooking.seat}
                   </p>
                 </div>
                 <Badge tone="teal" className="ml-auto">
-                  {nextTrip.checkInOpen ? "Check-in open" : "Confirmed"}
+                  Confirmed
                 </Badge>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                  <p className="text-xs text-slate-400">Fare</p>
-                  <p className="font-semibold text-white">{formatMoney(nextItinerary.price, settings.currency)}</p>
+                  <p className="text-xs text-slate-400">Total fare</p>
+                  <p className="font-semibold text-white">{formatMoney(nextBooking.fare.total, settings.currency)}</p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
                   <p className="text-xs text-slate-400">Travel time</p>
                   <p className="font-semibold text-white">
-                    {Math.floor(totalDuration(nextItinerary) / 60)}h {totalDuration(nextItinerary) % 60}m
+                    {(() => {
+                      const minutes = nextTrip.legs.reduce((sum, leg) => sum + leg.durationMin, 0);
+                      return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+                    })()}
                   </p>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-                  <p className="text-xs text-slate-400">Safety</p>
-                  <p className="font-semibold text-teal-300">{nextItinerary.safetyScore}/100</p>
+                  <p className="text-xs text-slate-400">Legs</p>
+                  <p className="font-semibold text-teal-300">{nextTrip.legs.length}</p>
                 </div>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Link to="/booking" className="btn-secondary">
+                <Link to="/trips" className="btn-secondary">
                   <MapPin className="h-4 w-4" /> Manage booking
                 </Link>
                 <Link to="/chat" className="btn-ghost btn border border-white/10">
