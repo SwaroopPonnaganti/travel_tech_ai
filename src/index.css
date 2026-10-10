@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  --app-font-scale: 1;
+}
+
+html {
+  font-size: calc(16px * var(--app-font-scale));
+}
+
+body {
+  @apply bg-navy-950 text-slate-100 antialiased;
+  font-family: theme("fontFamily.sans");
+  margin: 0;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(1100px 520px at 88% -12%, rgba(45, 212, 191, 0.14), transparent 60%),
+    radial-gradient(900px 520px at -8% 8%, rgba(39, 84, 156, 0.35), transparent 55%);
+  background-attachment: fixed;
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-white/10 bg-navy-900/80 shadow-card backdrop-blur;
+  }
+
+  .card-hover {
+    @apply transition hover:border-teal-500/40 hover:shadow-glow;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold
+      transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-400
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-teal-500 text-navy-950 hover:bg-teal-400;
+  }
+
+  .btn-secondary {
+    @apply btn border border-white/15 bg-white/5 text-slate-100 hover:border-teal-500/50 hover:bg-white/10;
+  }
+
+  .btn-danger {
+    @apply btn bg-rose-500/90 text-white hover:bg-rose-500;
+  }
+
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-navy-850 px-3.5 py-2.5 text-sm text-slate-100
+      placeholder:text-slate-500 focus:border-teal-500/60 focus:outline-none focus:ring-2
+      focus:ring-teal-500/30;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-400;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1
+      text-xs font-medium text-slate-300;
+  }
+}
+
+/* High contrast accessibility mode */
+html[data-contrast="high"] body {
+  background-image: none;
+  background-color: #05080f;
+}
+
+html[data-contrast="high"] .card {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: #0a142e;
+}
+
+html[data-contrast="high"] .btn-primary {
+  background: #2dd4bf;
+  color: #05080f;
+  outline: 2px solid #ffffff;
+}
+
+html[data-contrast="high"] a,
+html[data-contrast="high"] .text-teal-400 {
+  color: #7dfff0;
+  text-decoration: underline;
+}
+
+html[data-contrast="high"] .text-slate-400,
+html[data-contrast="high"] .text-slate-500 {
+  color: #d7e1f5;
+}
+
+/* Reduced motion accessibility mode */
+html[data-motion="reduced"] *,
+html[data-motion="reduced"] *::before,
+html[data-motion="reduced"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.05) 25%, rgba(255, 255, 255, 0.12) 37%, rgba(255, 255, 255, 0.05) 63%);
+  background-size: 400px 100%;
+  @apply animate-shimmer rounded-lg;
+}
+
+/* Reduced transparency accessibility mode */
+html[data-transparency="reduced"] .card,
+html[data-transparency="reduced"] .backdrop-blur {
+  backdrop-filter: none !important;
+  background-color: #0a142e !important;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(45, 212, 191, 0.35);
+  border-radius: 999px;
+}
+
+:focus-visible {
+  outline: 2px solid theme("colors.teal.400");
+  outline-offset: 2px;
+}
