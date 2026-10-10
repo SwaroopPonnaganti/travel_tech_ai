@@ -99,6 +99,28 @@
 - **Tests** — `src/lib/itinerary.test.ts` (21) and `src/pages/ItineraryResultsPage.test.tsx` (4), plus a
   new `/itineraries` routing test in `App.test.tsx`.
 
+### Disruption simulator (new, simulated)
+- **Types** — `src/lib/types.ts`: `DisruptionKind` (bus-delay, bus-cancellation, missed-connection,
+  last-mile-unavailable), `DisruptionEvent`, `RevisedItinerary`, `DisruptionSimulation`.
+- **Engine** — `src/lib/disruption.ts`: `simulateDisruption(original, plan, kind, options)` injects one
+  simulated disruption, perturbs the connection pool (shift or remove the affected leg, delay the
+  preceding leg for a missed connection), and calls the **real** `planItineraries` engine to recalculate
+  the remaining journey from the resume city. Recovered options are composed back onto the untouched
+  prefix with `assembleItinerary`, then re-checked against the original deadline, budget and comfort
+  constraints. Produces affected-leg identification, a recalculation description, per-option extra cost,
+  arrival delay, deadline/budget status and trade-off bullets, plus a clear no-alternative result.
+  `servicePool`, `shiftConnection` and `assembleItinerary` were extracted from `itinerary.ts` for reuse.
+- **UI** — `src/pages/DisruptionSimulatorPage.tsx`: scenario controls (journey selector, disruption-type
+  radio group, delay length, affected leg), a visible **Simulate Disruption** and **Reset** button, the
+  affected-leg panel, impact summary, an original-vs-revised comparison table and recalculated option
+  cards (reusing `PlannedItineraryCard`). Route `/simulator`, nav item "Disruption Simulator", plus a
+  link from the existing Disruption Management page. Every event/status is badged **Simulated**.
+- **i18n** — `nav.simulator` (all 5 languages) + full `sim.*` set in English and `sim.title`/
+  `sim.description` in the other languages (others fall back to English).
+- **Tests** — `src/lib/disruption.test.ts` (11: delay handling, cancellation recovery, missed-connection
+  transfer feasibility, no-alternative, deadline/budget re-checks), `src/pages/DisruptionSimulatorPage.test.tsx`
+  (3), plus a new `/simulator` routing test in `App.test.tsx`.
+
 ### Documentation
 - `docs/PRD.md`, `docs/architecture.md`, `docs/rules.md`, `docs/phases.md`, `docs/design.md`,
   `docs/memory.md`.
@@ -109,12 +131,13 @@
 |---|---|---|
 | Types | `npm run typecheck` | ✅ pass |
 | Lint | `npm run lint` | ✅ pass |
-| Tests | `npm test` | ✅ 101 passed (11 files) |
+| Tests | `npm test` | ✅ 115 passed (13 files) |
 | Build | `npm run build` | ✅ pass (dist generated) |
 | API | `curl localhost:4000/api/health` | ✅ ok |
 | Agent status | `curl localhost:4000/api/agent/status` | ✅ `llmConfigured:false` |
 | Agent plan (no key) | `curl -X POST localhost:4000/api/agent/plan` | ✅ 501 fallback |
 | Itineraries page | `curl localhost:5173/itineraries` | ✅ 200 (SPA) |
+| Simulator page | `curl localhost:5173/simulator` | ✅ 200 (SPA) |
 | Dev stack | `npm run dev` | ✅ web 5173 + api 4000 |
 
 ## How to run
