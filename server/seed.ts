@@ -1,4 +1,5 @@
-import type { Disruption, Itinerary, Trip } from "../src/lib/types";
+import type { Booking, Disruption, Itinerary, Trip } from "../src/lib/types";
+import { bookingItineraryFromLegacy, bookingStatusFromTrip, demoBooking } from "../src/lib/bookings";
 
 export interface SeedLeg {
   mode: Itinerary["legs"][number]["mode"];
@@ -135,7 +136,51 @@ export const seedTrips: Trip[] = [
     seat: "22C",
     checkInOpen: false,
   },
+  {
+    id: "trip-3",
+    ref: "TBS-4755",
+    title: "Kochi family vacation",
+    from: "Bengaluru",
+    to: "Kochi",
+    startDate: "2026-11-05",
+    endDate: "2026-11-09",
+    status: "upcoming",
+    travellers: 4,
+    price: 28400,
+    itineraryId: "it-104",
+    seat: "Assign at check-in",
+    checkInOpen: false,
+  },
+  {
+    id: "trip-4",
+    ref: "TBS-4702",
+    title: "Delhi product review",
+    from: "Bengaluru",
+    to: "Delhi",
+    startDate: "2026-08-11",
+    endDate: "2026-08-13",
+    status: "cancelled",
+    travellers: 1,
+    price: 9120,
+    itineraryId: "it-102",
+    seat: "—",
+    checkInOpen: false,
+  },
 ];
+
+/** Seed bookings mirror the demo trips so My Trips starts populated. */
+export const seedBookings: Booking[] = seedTrips.map((trip) => {
+  const itinerary = seedItineraries.find((i) => i.id === trip.itineraryId) ?? seedItineraries[0]!;
+  return demoBooking(bookingItineraryFromLegacy(itinerary), {
+    id: trip.id,
+    ref: trip.ref,
+    status: bookingStatusFromTrip(trip.status),
+    travellers: trip.travellers,
+    seat: trip.seat,
+    createdAt: `${trip.startDate}T09:00:00.000Z`,
+    cancelledAt: trip.status === "cancelled" ? `${trip.startDate}T09:00:00.000Z` : null,
+  });
+});
 
 export const seedDisruptions: Disruption[] = [
   {
@@ -150,6 +195,16 @@ export const seedDisruptions: Disruption[] = [
   },
   {
     id: "dis-2",
+    tripId: "trip-3",
+    title: "Heavy rain advisory — Kochi",
+    detail: "IMD red alert for 05–06 Nov. Outdoor activities reschedule advised. Hotel pickup unaffected.",
+    severity: "info",
+    kind: "weather",
+    createdAt: "2026-10-16T09:05:00",
+    resolved: false,
+  },
+  {
+    id: "dis-3",
     tripId: null,
     title: "Airport security queue > 40 min at BLR",
     detail: "Terminal 1 morning rush. Recommended arrival: 2 hours before departure.",
@@ -157,5 +212,15 @@ export const seedDisruptions: Disruption[] = [
     kind: "strike",
     createdAt: "2026-10-17T06:45:00",
     resolved: false,
+  },
+  {
+    id: "dis-4",
+    tripId: "trip-4",
+    title: "Flight AI-804 cancelled — weather",
+    detail: "Full refund processed to original payment method within 5 working days.",
+    severity: "critical",
+    kind: "cancellation",
+    createdAt: "2026-08-11T05:30:00",
+    resolved: true,
   },
 ];
