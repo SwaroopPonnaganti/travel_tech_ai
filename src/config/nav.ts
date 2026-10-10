@@ -1,6 +1,7 @@
 import {
   LayoutDashboard,
   MessagesSquare,
+  Route,
   Search,
   GitCompareArrows,
   ShieldAlert,
@@ -19,6 +20,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { to: "/", labelKey: "nav.dashboard", icon: LayoutDashboard },
   { to: "/chat", labelKey: "nav.chat", icon: MessagesSquare },
+  { to: "/plan", labelKey: "nav.planner", icon: Route },
   { to: "/search", labelKey: "nav.search", icon: Search },
   { to: "/compare", labelKey: "nav.compare", icon: GitCompareArrows },
   { to: "/disruptions", labelKey: "nav.disruptions", icon: ShieldAlert },
