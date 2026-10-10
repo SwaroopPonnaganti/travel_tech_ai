@@ -9,6 +9,7 @@ import { SearchPage } from "./pages/SearchPage";
 import { ItineraryResultsPage } from "./pages/ItineraryResultsPage";
 import { ComparePage } from "./pages/ComparePage";
 import { DisruptionsPage } from "./pages/DisruptionsPage";
+import { DisruptionSimulatorPage } from "./pages/DisruptionSimulatorPage";
 import { MyTripsPage } from "./pages/MyTripsPage";
 import { BookingReviewPage } from "./pages/BookingReviewPage";
 import { SettingsPage } from "./pages/SettingsPage";
@@ -25,6 +26,7 @@ export function AppRoutes() {
         <Route path="itineraries" element={<ItineraryResultsPage />} />
         <Route path="compare" element={<ComparePage />} />
         <Route path="disruptions" element={<DisruptionsPage />} />
+        <Route path="simulator" element={<DisruptionSimulatorPage />} />
         <Route path="trips" element={<MyTripsPage />} />
         <Route path="booking" element={<BookingReviewPage />} />
         <Route path="settings" element={<SettingsPage />} />
