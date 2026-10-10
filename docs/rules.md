@@ -70,3 +70,9 @@
   returns no results plus an explanation, and impossible connections are rejected with a reason
   (sold out, too few seats, transfer below the 30-minute minimum, unsupported accessibility/luggage).
   Multi-leg journeys are capped at 3 legs and never revisit a city.
+- **Disruption simulator** (`src/lib/disruption.ts`): every injected disruption and every recovery
+  option is **simulated demonstration data** and must carry the simulated label. Recovery options must
+  come from the real `planItineraries` engine — never be hard-coded or invented. A scenario with no
+  reachable alternative must return an explicit no-alternative result rather than a fabricated fix.
+  Recovered journeys are re-checked against the original arrival deadline, budget and minimum transfer
+  time before being presented as feasible.
