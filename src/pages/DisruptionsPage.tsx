@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { ShieldAlert, Zap, PlaneTakeoff, CheckCircle2, AlertTriangle, CloudRain, Ban, ArrowRight, Clock } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ShieldAlert, Zap, PlaneTakeoff, CheckCircle2, AlertTriangle, CloudRain, Ban, ArrowRight, Clock, Activity } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Card } from "../components/ui/Card";
 import { Badge } from "../components/ui/Badge";
@@ -31,6 +32,7 @@ const severityTone = { info: "navy", warning: "amber", critical: "rose" } as con
 
 export function DisruptionsPage() {
   const { t, announce } = useSettings();
+  const navigate = useNavigate();
   const [items, setItems] = useState<Disruption[]>(seed);
   const [filter, setFilter] = useState<(typeof FILTERS)[number]["value"]>("active");
   const [handled, setHandled] = useState<string[]>([]);
@@ -104,6 +106,9 @@ export function DisruptionsPage() {
         </Button>
         <Button variant="danger" icon={<PlaneTakeoff className="h-4 w-4" />} onClick={() => simulate("cancellation")}>
           Simulate cancellation
+        </Button>
+        <Button variant="ghost" icon={<Activity className="h-4 w-4" />} onClick={() => navigate("/simulator")}>
+          {t("nav.simulator")}
         </Button>
       </div>
 
