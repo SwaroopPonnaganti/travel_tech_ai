@@ -30,6 +30,7 @@ Legend: ✅ done in this build · 🚧 next · ⏳ planned
 
 ## Phase 3 — Agentic intelligence 🚧
 - ✅ **Conversational Trip Planner** — free-text (English + Telugu) extraction into an editable structured form, follow-up questions for missing essentials, never invents dates, LLM with secure server-side key + rule-based fallback (`src/lib/planner.ts`, `src/lib/llm.ts`, `TripPlannerPage`, `TripPlanForm`).
+- ✅ **Itinerary-planning engine** — graph search over a fixed simulated connection dataset (Visakhapatnam ↔ Hyderabad and other corridors). Assembles multi-leg journeys, validates arrival deadlines, budget, transfer times, seats, accessibility and luggage, rejects impossible connections, and returns labelled alternatives when nothing satisfies every constraint (`src/lib/connections.ts`, `src/lib/itinerary.ts`, `ItineraryResultsPage`, `PlannedItineraryCard`). All schedules/fares/availability are marked **simulated**.
 - 🚧 LLM-backed chat with tool-calling over inventory/advisories.
 - ⏳ Proactive price-drop and disruption watchers with notification centre.
 - ⏳ Personalised ranking from trip history and preferences.
