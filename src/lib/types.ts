@@ -284,6 +284,94 @@ export const DEFAULT_ITINERARY_FILTERS: ItineraryFilters = {
   availabilityOnly: false,
 };
 
+// ── Simulated booking & trip management ──────────────────────────────────────
+
+export type BookingStatus = "confirmed" | "cancelled" | "completed";
+
+/** Itemised fare for one simulated booking. All amounts in INR. */
+export interface FareBreakdown {
+  /** Per-person fare × travellers. */
+  baseFare: number;
+  taxes: number;
+  addOns: number;
+  discount: number;
+  total: number;
+  perPerson: number;
+}
+
+/** A frozen, bookable snapshot of a selected itinerary. Always simulated. */
+export interface BookingItinerary {
+  id: string;
+  title: string;
+  from: string;
+  to: string;
+  date: string;
+  legs: Leg[];
+  /** Per-person fare in INR. */
+  price: number;
+  refundable: boolean;
+  simulated: true;
+}
+
+/**
+ * A saved simulated booking. No real reservation or payment is created;
+ * the reference is a demo identifier only.
+ */
+export interface Booking {
+  id: string;
+  ref: string;
+  status: BookingStatus;
+  itinerary: BookingItinerary;
+  passengers: TravellerDetails[];
+  travellers: number;
+  contactEmail: string;
+  seatPreference: string;
+  seat: string;
+  addOns: string[];
+  fare: FareBreakdown;
+  assumptions: string[];
+  consentNotifications: boolean;
+  simulated: true;
+  createdAt: string;
+  cancelledAt: string | null;
+}
+
+export interface CreateBookingInput {
+  itinerary: BookingItinerary;
+  passengers: TravellerDetails[];
+  contactEmail: string;
+  seatPreference: string;
+  addOns: string[];
+  consentNotifications: boolean;
+  /** Must be true — booking is consequential and requires explicit confirmation. */
+  confirmed: boolean;
+}
+
+// ── In-app notification centre (simulated previews) ──────────────────────────
+
+export type NotificationChannel = "email" | "sms" | "push";
+
+export type NotificationKind =
+  | "booking-confirmed"
+  | "booking-cancelled"
+  | "disruption"
+  | "alternative"
+  | "price-drop"
+  | "check-in";
+
+/** A simulated notification preview. Nothing is sent to any real channel. */
+export interface AppNotification {
+  id: string;
+  kind: NotificationKind;
+  channel: NotificationChannel;
+  title: string;
+  recipient: string;
+  preview: string;
+  createdAt: string;
+  read: boolean;
+  simulated: true;
+}
+
 // ── Disruption simulator (simulated what-if scenarios) ───────────────────────
 
 export type DisruptionKind =
