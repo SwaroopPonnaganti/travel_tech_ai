@@ -7,8 +7,9 @@
                 │                 Browser (SPA)                  │
                 │  React + TypeScript + Vite + Tailwind          │
                 │                                                │
-   Nav ─────────┤  Dashboard · Chat · Planner · Search · Compare │
-                │  Disruptions · My Trips · Booking · Settings   │
+   Nav ─────────┤  Dashboard · Chat · Planner · Itineraries      │
+                │  Search · Compare · Disruptions · My Trips      │
+                │  Booking · Settings                             │
                 └───────────────┬────────────────────────────────┘
                                 │  fetch("/api/...")
                                 │  (Vite dev proxy → :4000)
@@ -55,7 +56,32 @@
   / `ROAMAGENT_LLM_MODEL` and calls an OpenAI-compatible chat-completions endpoint with a strict
   JSON schema. The key stays on the server and is never shipped to the browser.
 - Flow: free text → rule extraction → (optional) LLM extraction → merge (LLM wins, rules fill gaps)
-  → sanitize → validate → editable form + follow-up question → hand-off to Trip Search.
+  → sanitize → validate → editable form + follow-up question → hand-off to Itinerary Planning.
+
+### Itinerary-planning engine (simulated)
+- `src/lib/connections.ts` — the **fixed demonstration dataset**: a list of scheduled bus services
+  (edges) between Visakhapatnam, Vijayawada, Rajahmundry, Hyderabad, Kurnool, Bengaluru and Chennai,
+  including direct Visakhapatnam ↔ Hyderabad overnight/day services and multi-leg corridors. Each
+  connection carries origin/destination + boarding/alighting stops, departure/arrival, duration, fare,
+  transport type, availability + seats left, coach class, accessibility, luggage allowance, a data
+  source and a last-updated timestamp. **Every row is simulated** and materialised into dated
+  connections via `connectionsForDate(date)`.
+- `src/lib/itinerary.ts` — the route-planning engine. It builds a time-aware adjacency graph and runs
+  a depth-limited (max 3 legs) search that:
+  - assembles multi-leg journeys (direct + transfers) for the requested date and departure window;
+  - validates transfer times (`MIN_TRANSFER_MIN` = 30 min), seats for the party, accessibility and
+    luggage, arrival deadlines and budget;
+  - **rejects impossible connections** (sold out, too few seats, too-little transfer time, unsupported
+    needs) with a human-readable reason;
+  - classifies journeys as **feasible** or **labelled alternatives** (over budget / misses deadline /
+    departs outside the preferred window), and explains why when none is feasible;
+  - derives transfer locations, waiting times and transfer risk, and computes price/duration/comfort/
+    risk scores. `sortItineraries` and `filterItineraries` power price/duration/arrival sorting and
+    filtering. Deterministic and fully unit-tested.
+- `src/components/planner/PlannedItineraryCard.tsx` and `src/pages/ItineraryResultsPage.tsx` —
+  rich itinerary cards (fare, duration, dep/arr times, transfers, comfort, transfer risk,
+  deadline compliance, data freshness) plus sorting/filtering and a prominent **simulated-data**
+  banner. Reached from the planner via `Find options` (route `/itineraries`).
 
 ### State
 - `SettingsContext` — language + accessibility, persisted to `localStorage`, applied to `<html>`.
@@ -86,15 +112,16 @@ travel-assistant/
     ├── index.css              # Tailwind layers + a11y modes
     ├── config/nav.ts          # navigation model
     ├── lib/                   # types, format, intent, planner, llm, compare, chat, api, i18n, mock, cn
+    │                          # + connections (simulated dataset) + itinerary (route engine)
     ├── state/                 # SettingsContext, TripsContext
     ├── components/
     │   ├── layout/AppShell.tsx
     │   ├── ui/                # Button, Card, Badge, Field, Modal, Skeleton, …
-    │   ├── planner/           # TripPlanForm.tsx (structured plan editor)
+    │   ├── planner/           # TripPlanForm.tsx, PlannedItineraryCard.tsx
     │   ├── ItineraryCard.tsx
     │   ├── TransportIcon.tsx
     │   └── LiveRegion.tsx
-    ├── pages/                 # one file per feature screen
+    ├── pages/                 # one file per feature screen (incl. ItineraryResultsPage.tsx)
     └── test/setup.ts          # Vitest jsdom setup
 ```
 
