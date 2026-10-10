@@ -1,6 +1,11 @@
 import express, { type NextFunction, type Request, type Response } from "express";
 import cors from "cors";
 import {
+  BookingError,
+  cancelBooking,
+  createBooking,
+  getBookingByRef,
+  listBookings,
   listDisruptions,
   listItineraries,
   listTrips,
@@ -48,6 +53,60 @@ app.get("/api/trips", (_req: Request, res: Response) => {
 
 app.get("/api/disruptions", (_req: Request, res: Response) => {
   res.json(listDisruptions());
+});
+
+app.get("/api/bookings", (_req: Request, res: Response) => {
+  res.json(listBookings());
+});
+
+app.get("/api/bookings/:ref", (req: Request, res: Response) => {
+  const booking = getBookingByRef(req.params.ref);
+  if (!booking) {
+    res.status(404).json({ error: "Booking not found" });
+    return;
+  }
+  res.json(booking);
+});
+
+app.post("/api/bookings", (req: Request, res: Response) => {
+  const body = req.body ?? {};
+  if (body.confirmed !== true) {
+    res.status(400).json({
+      error: "Booking requires explicit confirmation",
+      fieldErrors: { confirmed: "Booking requires explicit confirmation" },
+    });
+    return;
+  }
+  try {
+    const booking = createBooking(body);
+    res.status(201).json(booking);
+  } catch (err) {
+    if (err instanceof BookingError) {
+      res.status(err.status).json({ error: err.message, fieldErrors: err.fieldErrors });
+      return;
+    }
+    throw err;
+  }
+});
+
+app.post("/api/bookings/:ref/cancel", (req: Request, res: Response) => {
+  if (req.body?.confirmed !== true) {
+    res.status(400).json({
+      error: "Cancellation requires explicit confirmation",
+      fieldErrors: { confirmed: "Cancellation requires explicit confirmation" },
+    });
+    return;
+  }
+  try {
+    const booking = cancelBooking(req.params.ref);
+    res.json(booking);
+  } catch (err) {
+    if (err instanceof BookingError) {
+      res.status(err.status).json({ error: err.message });
+      return;
+    }
+    throw err;
+  }
 });
 
 app.post("/api/chat", (req: Request, res: Response) => {
