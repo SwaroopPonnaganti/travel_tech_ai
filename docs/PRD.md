@@ -15,7 +15,7 @@ proposes actions instead of only displaying data.
 - Demo end-to-end within a hackathon window with a real frontend, API and database.
 
 ### Non-goals (for the hackathon scope)
-- Real payment gateway integration (checkout is simulated with a fare breakdown + PNR).
+- Real payment gateway integration (checkout is simulated with a fare breakdown + demo booking reference).
 - Real third-party GDS / airline APIs (seeded + simulated inventory is used).
 - Multi-tenant auth / SSO (a single demo user profile is assumed).
 
@@ -100,14 +100,25 @@ proposes actions instead of only displaying data.
   result is shown when no recovery exists.
 
 ### F8 — My Trips
-- Status tabs (all, upcoming, completed, cancelled).
-- Trip cards with seats, dates, travellers; details modal; check-in flow.
-- Cancellation with confirmation modal and refund messaging.
+- Reads saved **simulated bookings** from the API (`GET /api/bookings`) with an offline demo fallback.
+- Status tabs (all, upcoming, completed, cancelled) and status counters.
+- Trip cards with reference, seats, dates, travellers and fare; details modal; check-in flow.
+- Disruption alerts and ranked suggested alternatives on affected trips.
+- Cancellation with a confirmation modal, refund messaging and persisted status change.
 
 ### F9 — Booking Review
 - Itinerary selector, dynamic traveller forms (1–9), contact email, seat preference, add-ons.
 - Fare breakdown: base, taxes, add-ons, refundable discount, total.
-- Terms acceptance, validation, submit with loading, confirmation screen with generated PNR.
+- Terms acceptance and input validation; **no booking is saved without an explicit confirmation step**.
+- On confirm, `POST /api/bookings` persists a simulated booking and returns a unique demo reference
+  (`TBS-####`); the confirmation screen shows the reference and the recorded assumptions.
+
+### F11 — Notification centre (simulated)
+- Bell in the app shell with an unread badge and a slide-over panel.
+- Notifications generated from booking and cancellation events, plus seeded demo notices.
+- Explicit **consent** toggle gates simulated delivery previews through email / SMS / push channels.
+- Read / mark-all-read state; no real messages are ever sent.
+
 
 ### F10 — Settings (language & accessibility)
 - Language: English, Hindi, Telugu, Tamil, Spanish (live UI translation).
