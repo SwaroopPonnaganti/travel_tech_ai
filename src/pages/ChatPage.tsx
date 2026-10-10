@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bot, Send, Sparkles, Trash2, User, Search as SearchIcon } from "lucide-react";
+import { Bot, Send, Sparkles, Trash2, User, Search as SearchIcon, Route } from "lucide-react";
 import { PageHeader } from "../components/ui/PageHeader";
 import { Button } from "../components/ui/Button";
 import { useSettings } from "../state/SettingsContext";
@@ -91,9 +91,14 @@ export function ChatPage() {
         title={t("nav.chat")}
         description="Describe your trip in plain language. RoamAgent extracts intent, ranks options and can hand off to search or booking."
         action={
-          <Button variant="secondary" icon={<Trash2 className="h-4 w-4" />} onClick={() => setMessages([welcome()])}>
-            Clear chat
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="secondary" icon={<Route className="h-4 w-4" />} onClick={() => navigate("/plan")}>
+              {t("planner.title")}
+            </Button>
+            <Button variant="secondary" icon={<Trash2 className="h-4 w-4" />} onClick={() => setMessages([welcome()])}>
+              Clear chat
+            </Button>
+          </div>
         }
       />
 
