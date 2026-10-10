@@ -8,7 +8,7 @@
   `src/index.css` (`.card`, `.btn-primary`, `.input`, `.label`, `.chip`).
 - **lucide-react** for every icon.
 - **react-router-dom** for navigation (`NavLink` + `<Outlet />` layout).
-- **Express + better-sqlite3** for the API; one module per concern (`db.ts`, `seed.ts`, `index.ts`).
+- **Express + better-sqlite3** for the API; one module per concern (`db.ts`, `seed.ts`, `llm.ts`, `index.ts`).
 - **Vitest + @testing-library/react** for tests; keep pure logic in `src/lib` so it is testable.
 - **Shared helpers**: `formatMoney`, `formatDuration`, `formatDate` (never hand-roll formatting),
   `cn()` for conditional class names, `ApiError`/`withFallback` for network calls.
@@ -55,3 +55,11 @@
 - No autonomous spending, cancellation or PII submission without an explicit user action.
 - Replies are deterministic and auditable (`respondToMessage` is a pure function) — no hidden state.
 - If confidence is low (few signals parsed), the agent asks a clarifying question instead of guessing.
+- **Trip Planner** (`src/lib/planner.ts`): never invent a date or travel requirement — a missing
+  essential triggers a follow-up question; values the user has already entered are never overwritten
+  by a later extraction (`mergeTripPlan` fills empty slots only).
+- **LLM is optional and server-side**: `ROAMAGENT_LLM_API_KEY` is read only by `server/llm.ts` and is
+  never sent to the browser. The client reaches the model only through `POST /api/agent/plan`, which
+  returns `501` when unconfigured so the deterministic rule parser takes over.
+- All plan input is passed through `sanitizeTripPlan` (coerce / drop invalid values) before it
+  reaches the form or a hand-off.
