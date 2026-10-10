@@ -56,36 +56,54 @@ proposes actions instead of only displaying data.
 - LLM extraction only via the server-side proxy (`ROAMAGENT_LLM_API_KEY`); unconfigured → 501 →
   deterministic rule fallback so the UI never blocks.
 - Telugu input support: postposition reordering, city/keyword/numeral translation.
-- Hand-off to Trip Search pre-filled with the extracted route, date, travellers and budget.
+- Hand-off to Itinerary Planning, carrying the full structured plan.
 - Reset, accessibility chips (wheelchair / senior / infant / …), cabin+checked luggage counters.
 
-### F4 — Trip Search
+### F4 — Itinerary Planning (route engine)
+- Graph-search engine over a **fixed simulated connection dataset** (Visakhapatnam ↔ Hyderabad and
+  other corridors) that assembles feasible multi-leg journeys (direct + transfers).
+- Each connection has origin/destination + stops, departure/arrival times, duration, fare, transport
+  type, availability + seats, coach class, accessibility, luggage allowance, data source and
+  last-updated timestamp.
+- Validates **arrival deadlines, budget, transfer times, seat availability, accessibility, luggage and
+  passenger preferences**.
+- **Rejects impossible connections** (sold out, too few seats, too-little transfer time, unsupported
+  needs) with explicit reasons; when nothing satisfies every constraint it explains why and suggests
+  clearly labelled alternatives (over budget / misses deadline / outside preferred window).
+- Itinerary cards show fare, journey duration, departure/arrival, transfers, comfort, transfer risk,
+  arrival-deadline compliance and data freshness.
+- Sorting (recommended, price, duration, arrival, departure, transfers) and filtering (price, duration,
+  mode, coach, direct-only, deadline-only, availability-only).
+- **All schedules, fares and availability are simulated** and labelled as such — never claimed to be
+  live transport data.
+
+### F5 — Trip Search
 - Form: from, to, date, priority, travellers, budget.
 - Client + server validation with inline error messages.
 - Loading skeletons, empty state, demo/live data badge, graceful API fallback.
 
-### F5 — Itinerary Comparison
+### F6 — Itinerary Comparison
 - Select up to 3 itineraries.
 - Side-by-side table: fare, travel time, stops, safety, on-time record, weighted score.
 - Priority selector (Balanced / Cheapest / Fastest / Safest) re-ranks and highlights a winner with reasons.
 
-### F6 — Disruption Management
+### F7 — Disruption Management
 - Active / all / resolved filters.
 - Severity classification (info, warning, critical) and category icons (delay, cancellation, weather, strike).
 - Simulate delay/cancellation, accept recovery, dismiss.
 - Suggested alternatives ranked by safety.
 
-### F7 — My Trips
+### F8 — My Trips
 - Status tabs (all, upcoming, completed, cancelled).
 - Trip cards with seats, dates, travellers; details modal; check-in flow.
 - Cancellation with confirmation modal and refund messaging.
 
-### F8 — Booking Review
+### F9 — Booking Review
 - Itinerary selector, dynamic traveller forms (1–9), contact email, seat preference, add-ons.
 - Fare breakdown: base, taxes, add-ons, refundable discount, total.
 - Terms acceptance, validation, submit with loading, confirmation screen with generated PNR.
 
-### F9 — Settings (language & accessibility)
+### F10 — Settings (language & accessibility)
 - Language: English, Hindi, Telugu, Tamil, Spanish (live UI translation).
 - Text size (S/M/L/XL), high-contrast mode, reduced motion, reduce transparency.
 - Currency and 12h/24h time format.
@@ -93,6 +111,6 @@ proposes actions instead of only displaying data.
 - Preferences persist in `localStorage` and apply via `<html>` data attributes.
 
 ## 4. Success metrics (hackathon)
-- All 9 screens functional and responsive (mobile → desktop).
+- All 10 screens functional and responsive (mobile → desktop).
 - Type check, lint, unit/integration tests and production build all pass.
-- End-to-end demo: chat → search → compare → booking → trip → disruption recovery.
+- End-to-end demo: chat/plan → itinerary planning → search → compare → booking → trip → disruption recovery.
