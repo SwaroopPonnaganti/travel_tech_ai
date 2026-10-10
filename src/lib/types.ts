@@ -96,3 +96,61 @@ export interface AppSettings {
 }
 
 export type LanguageCode = "en" | "hi" | "te" | "ta" | "es";
+
+// ── Conversational trip planner ──────────────────────────────────────────────
+
+export type CoachClass = "seater" | "sleeper";
+
+export type DepartureWindow = "early-morning" | "morning" | "afternoon" | "evening" | "night";
+
+export interface LuggageRequirement {
+  cabin: number;
+  checked: number;
+  special: string | null;
+}
+
+/** Structured trip requirement produced by the conversational planner. */
+export interface TripPlan {
+  origin: string | null;
+  destination: string | null;
+  /** Preferred departure date (ISO yyyy-mm-dd). */
+  departureDate: string | null;
+  /** Coarse preferred departure window when no clock time is given. */
+  departureWindow: DepartureWindow | null;
+  /** Explicit preferred departure time (HH:mm, 24h). */
+  departureTime: string | null;
+  /** Required arrival date (ISO yyyy-mm-dd), when the traveller must arrive by then. */
+  arrivalDate: string | null;
+  /** Required arrival time (HH:mm, 24h). */
+  arrivalTime: string | null;
+  passengers: number | null;
+  maxBudget: number | null;
+  coachClass: CoachClass | null;
+  accessibility: string[];
+  luggage: LuggageRequirement | null;
+  firstMile: string | null;
+  lastMile: string | null;
+}
+
+export type PlanFieldKey = keyof TripPlan;
+
+export type PlanSource = "llm" | "rule";
+
+export interface PlanExtraction {
+  plan: TripPlan;
+  captured: PlanFieldKey[];
+  missing: PlanFieldKey[];
+  confidence: number;
+  source: PlanSource;
+}
+
+export interface PlanValidation {
+  errors: Partial<Record<PlanFieldKey, string>>;
+  ok: boolean;
+}
+
+export interface AgentStatus {
+  llmConfigured: boolean;
+  model: string | null;
+  provider: string | null;
+}
