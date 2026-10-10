@@ -25,7 +25,7 @@ import { DEMO_SERVICE_DATE, datasetCities } from "../lib/connections";
 import { formatDate, formatMoney } from "../lib/format";
 import { useSettings } from "../state/SettingsContext";
 import { DEFAULT_ITINERARY_FILTERS } from "../lib/types";
-import type { ItineraryFilters, ItinerarySort, TransportMode, TripPlan } from "../lib/types";
+import type { ItineraryFilters, ItinerarySort, PlannedItinerary, TransportMode, TripPlan } from "../lib/types";
 
 const SORTS: ItinerarySort[] = ["recommended", "price", "duration", "arrival", "departure", "transfers"];
 const MODES: TransportMode[] = ["bus", "train", "flight", "cab"];
@@ -69,6 +69,10 @@ export function ItineraryResultsPage() {
       ...prev,
       modes: prev.modes.includes(mode) ? prev.modes.filter((m) => m !== mode) : [...prev.modes, mode],
     }));
+  }
+
+  function selectItinerary(itinerary: PlannedItinerary) {
+    navigate("/booking", { state: { planned: itinerary, travellers: plan.passengers ?? itinerary.passengers } });
   }
 
   return (
@@ -224,7 +228,7 @@ export function ItineraryResultsPage() {
             <Sparkles className="h-4 w-4" /> {t("plan.matches")} · {feasible.length}
           </h2>
           {feasible.map((it, idx) => (
-            <PlannedItineraryCard key={it.id} itinerary={it} rank={idx + 1} />
+            <PlannedItineraryCard key={it.id} itinerary={it} rank={idx + 1} onSelect={selectItinerary} />
           ))}
         </section>
       )}
@@ -238,7 +242,7 @@ export function ItineraryResultsPage() {
             <p className="text-sm text-slate-400">{t("plan.alternatives.hint")}</p>
           </div>
           {alternatives.map((it, idx) => (
-            <PlannedItineraryCard key={it.id} itinerary={it} rank={idx + 1} />
+            <PlannedItineraryCard key={it.id} itinerary={it} rank={idx + 1} onSelect={selectItinerary} />
           ))}
         </section>
       )}
