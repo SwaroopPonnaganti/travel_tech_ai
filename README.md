@@ -9,6 +9,7 @@ on the backend. Icons by **lucide-react**, tests by **Vitest**.
 ## Features
 - **Dashboard** — KPIs, next trip, disruption radar, spend trend, activity feed.
 - **AI Travel Chat** — natural-language requests parsed into origin/destination/date/budget/priority with grounded recommendations.
+- **Trip Planner** — describe a trip in English or Telugu and get an editable structured plan; follow-up questions fill the gaps, with optional server-side LLM extraction (rule fallback when no key).
 - **Trip Search** — validated form, loading skeletons, graceful live-API fallback, ranked results.
 - **Itinerary Comparison** — compare up to 3 options with a weighted score and winner highlight.
 - **Disruption Management** — severity filters, simulate/recover actions, ranked alternatives.
@@ -58,6 +59,21 @@ npm run preview      # preview the production build
 | GET | `/api/trips` | Bookings |
 | GET | `/api/disruptions` | Advisories / disruptions |
 | POST | `/api/chat` | Chat echo (agent engine wiring in Phase 2) |
+| GET | `/api/agent/status` | Is a server-side LLM configured? |
+| POST | `/api/agent/plan` | LLM trip-plan extraction (501 → client rule fallback) |
+
+## Optional LLM (Trip Planner)
+
+The Trip Planner extracts plans with an on-device rule parser by default. To enable LLM extraction,
+set the key on the **server only** (it is never shipped to the browser — see `.env.example`):
+
+```bash
+export ROAMAGENT_LLM_API_KEY=sk-...
+export ROAMAGENT_LLM_BASE_URL=https://api.openai.com/v1   # any OpenAI-compatible endpoint
+export ROAMAGENT_LLM_MODEL=gpt-4o-mini
+```
+
+Without a key, `POST /api/agent/plan` returns `501` and the client falls back to the rule parser.
 
 ## Project structure
 
@@ -73,7 +89,7 @@ prototype/  original single-file SafeRoute prototype (preserved)
 - [Phases](docs/phases.md) · [Design](docs/design.md) · [Memory](docs/memory.md)
 
 ## Roadmap
-- **Phase 1 ✅** Frontend: all 8 screens, UI kit, intent/compare/chat engine, tests, docs.
+- **Phase 1 ✅** Frontend: 8 screens, UI kit, intent/compare/chat engine, tests, docs.
 - **Phase 2 🚧** Backend: Express + SQLite API, persist bookings/cancellations, server-side agent.
-- **Phase 3 ⏳** LLM tool-calling agent, proactive watchers.
+- **Phase 3 🚧** Agentic: ✅ **Conversational Trip Planner** (EN/Telugu extraction, follow-ups, LLM with rule fallback); LLM tool-calling agent, proactive watchers.
 - **Phase 4 ⏳** Auth, payments, E2E tests.
