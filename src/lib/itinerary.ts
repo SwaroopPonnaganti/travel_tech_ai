@@ -54,8 +54,23 @@ export function parseWall(iso: string): number {
   return Date.parse(iso.includes("Z") || iso.includes("+") ? iso : `${iso}Z`);
 }
 
-function minutesBetween(a: string, b: string): number {
+export function minutesBetween(a: string, b: string): number {
   return Math.round((parseWall(b) - parseWall(a)) / 60000);
+}
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+/** Shift an ISO local datetime by a number of minutes, preserving the format. */
+export function shiftIso(iso: string, deltaMin: number): string {
+  const d = new Date(parseWall(iso) + deltaMin * 60000);
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00`;
+}
+
+/** Return a copy of a connection rescheduled by a number of minutes. */
+export function shiftConnection(c: Connection, deltaMin: number): Connection {
+  return { ...c, id: `${c.id}${deltaMin >= 0 ? "+" : ""}${deltaMin}`, depart: shiftIso(c.depart, deltaMin), arrive: shiftIso(c.arrive, deltaMin) };
 }
 
 function minuteOfDay(iso: string): number {
@@ -66,6 +81,18 @@ function addDays(date: string, days: number): string {
   const d = new Date(`${date}T00:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
+}
+
+/**
+ * The full connection pool the engine searches: the requested service date plus
+ * the following day so overnight journeys can still reach their destination.
+ * Day-two services are marked with an `@d2` suffix so every row keeps a unique id.
+ */
+export function servicePool(date: string): Connection[] {
+  return [
+    ...connectionsForDate(date),
+    ...connectionsForDate(addDays(date, 1)).map((c) => ({ ...c, id: `${c.id}@d2` })),
+  ];
 }
 
 // ── city matching ────────────────────────────────────────────────────────────
@@ -220,6 +247,18 @@ function buildItinerary(connections: Connection[], ctx: BuildContext): PlannedIt
   };
 }
 
+/**
+ * Assemble a PlannedItinerary from an explicit ordered list of connections.
+ * Used by the disruption simulator to evaluate composed prefix + recalculation
+ * journeys against the original plan's constraints. The departure window is
+ * intentionally ignored because the journey is already underway.
+ */
+export function assembleItinerary(connections: Connection[], plan: TripPlan, date: string): PlannedItinerary {
+  const deadlineIso = plan.arrivalDate ? `${plan.arrivalDate}T${plan.arrivalTime ?? "23:59"}:00` : null;
+  const ctx: BuildContext = { plan, date, deadlineIso, startMin: 0, endMin: 1440 };
+  return buildItinerary(connections, ctx);
+}
+
 // ── scoring ──────────────────────────────────────────────────────────────────
 
 function range(arr: number[]): { min: number; max: number } {
@@ -285,7 +324,7 @@ export function planItineraries(plan: TripPlan, options: PlanOptions = {}): Plan
     );
   }
 
-  const pool = options.connections ?? [...connectionsForDate(date), ...connectionsForDate(addDays(date, 1)).map((c) => ({ ...c, id: `${c.id}@d2` }))];
+  const pool = options.connections ?? servicePool(date);
 
   const byFrom = new Map<string, Connection[]>();
   for (const c of pool) {
