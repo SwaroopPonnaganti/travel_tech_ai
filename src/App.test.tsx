@@ -50,6 +50,12 @@ describe("App routing", () => {
     expect(screen.getByLabelText("Passengers")).toBeInTheDocument();
   });
 
+  it("renders the itinerary planning results page", () => {
+    renderAt("/itineraries");
+    expect(screen.getByRole("heading", { name: /itinerary planning/i })).toBeInTheDocument();
+    expect(screen.getByText(/simulated demonstration data/i)).toBeInTheDocument();
+  });
+
   it("shows a not found page for unknown routes", () => {
     renderAt("/does-not-exist");
     expect(screen.getByText(/lost in transit/i)).toBeInTheDocument();
