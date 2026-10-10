@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { Menu, Plane, Bell, X, LifeBuoy } from "lucide-react";
+import { Menu, Plane, X, LifeBuoy } from "lucide-react";
 import { NAV_ITEMS } from "../../config/nav";
 import { useSettings } from "../../state/SettingsContext";
-import { useTrips } from "../../state/TripsContext";
+import { useBookings } from "../../state/BookingsContext";
+import { NotificationBell } from "../notifications/NotificationCenter";
 import { LiveRegion } from "../LiveRegion";
 import { cn } from "../../lib/cn";
 import { initials } from "../../lib/format";
@@ -52,7 +53,7 @@ function Navigation({ onNavigate }: { onNavigate?: () => void }) {
 
 export function AppShell() {
   const { t } = useSettings();
-  const { trips } = useTrips();
+  const { trips } = useBookings();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
   const upcoming = trips.filter((tr) => tr.status === "upcoming" || tr.status === "in-progress").length;
@@ -66,6 +67,10 @@ export function AppShell() {
         <Brand />
         <Navigation />
         <div className="mt-auto space-y-3">
+          <div className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            <span className="text-xs font-semibold text-slate-300">Notification centre</span>
+            <NotificationBell />
+          </div>
           <div className="rounded-2xl border border-teal-500/25 bg-teal-500/5 p-4">
             <p className="flex items-center gap-2 text-xs font-semibold text-teal-200">
               <LifeBuoy className="h-4 w-4" aria-hidden="true" /> 24×7 Travel Desk
@@ -91,18 +96,7 @@ export function AppShell() {
         <header className="sticky top-0 z-30 flex items-center justify-between border-b border-white/10 bg-navy-900/90 px-4 py-3 backdrop-blur">
           <Brand />
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              aria-label="Notifications"
-              className="relative rounded-xl border border-white/10 p-2 text-slate-300 hover:bg-white/10"
-            >
-              <Bell className="h-5 w-5" />
-              {upcoming > 0 && (
-                <span className="absolute -right-0.5 -top-0.5 grid h-4 w-4 place-items-center rounded-full bg-teal-500 text-[10px] font-bold text-navy-950">
-                  {upcoming}
-                </span>
-              )}
-            </button>
+            <NotificationBell />
             <button
               type="button"
               aria-label="Open navigation menu"
