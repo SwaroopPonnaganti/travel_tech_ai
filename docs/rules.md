@@ -76,3 +76,13 @@
   reachable alternative must return an explicit no-alternative result rather than a fabricated fix.
   Recovered journeys are re-checked against the original arrival deadline, budget and minimum transfer
   time before being presented as feasible.
+- **Booking** (`src/lib/bookings.ts`, `server/db.ts`): bookings are **simulated** — never take payment,
+  never use payment credentials, never claim a real reservation, and label every reference as a demo
+  identifier (`TBS-####`). A booking or cancellation must not happen without an **explicit confirmation
+  step**: the API rejects `POST /api/bookings` and `POST /api/bookings/:ref/cancel` with `400` unless
+  `confirmed: true`, and the UI opens a confirmation modal first. Validate all input server-side
+  (`validateBookingInput` → `BookingError.fieldErrors`) before persisting.
+- **Notifications** (`src/state/NotificationsContext.tsx`): the notification centre only produces
+  **in-app** notices and **simulated delivery previews**. No real email/SMS/push is sent, and delivery
+  previews are gated behind explicit user **consent** (default off, persisted). Notifications are
+  derived from real app events (booking/cancellation) — never fabricated claims.
