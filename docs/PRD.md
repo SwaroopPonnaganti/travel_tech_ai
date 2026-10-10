@@ -87,11 +87,17 @@ proposes actions instead of only displaying data.
 - Side-by-side table: fare, travel time, stops, safety, on-time record, weighted score.
 - Priority selector (Balanced / Cheapest / Fastest / Safest) re-ranks and highlights a winner with reasons.
 
-### F7 — Disruption Management
+### F7 — Disruption Management & Simulator
 - Active / all / resolved filters.
 - Severity classification (info, warning, critical) and category icons (delay, cancellation, weather, strike).
 - Simulate delay/cancellation, accept recovery, dismiss.
 - Suggested alternatives ranked by safety.
+- **Disruption Simulator** (`/simulator`): inject a simulated bus delay, bus cancellation, missed connection
+  or unavailable last-mile transport into a journey from the route engine. Identifies the affected leg,
+  recalculates the remaining journey with the real planning engine, and compares original vs revised with
+  extra cost, arrival delay, deadline + budget re-checks and trade-off explanations. Visible **Simulate
+  Disruption** and **Reset** controls; every event/status is labelled simulated; a clear no-alternative
+  result is shown when no recovery exists.
 
 ### F8 — My Trips
 - Status tabs (all, upcoming, completed, cancelled).
@@ -111,6 +117,6 @@ proposes actions instead of only displaying data.
 - Preferences persist in `localStorage` and apply via `<html>` data attributes.
 
 ## 4. Success metrics (hackathon)
-- All 10 screens functional and responsive (mobile → desktop).
+- All 11 screens functional and responsive (mobile → desktop).
 - Type check, lint, unit/integration tests and production build all pass.
 - End-to-end demo: chat/plan → itinerary planning → search → compare → booking → trip → disruption recovery.
