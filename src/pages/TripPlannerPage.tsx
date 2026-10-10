@@ -150,15 +150,7 @@ export function TripPlannerPage() {
       announce("Please complete the required fields");
       return;
     }
-    navigate("/search", {
-      state: {
-        from: plan.origin,
-        to: plan.destination,
-        date: plan.departureDate,
-        travellers: plan.passengers,
-        budget: plan.maxBudget,
-      },
-    });
+    navigate("/itineraries", { state: { plan } });
   }
 
   const statusBadge = status?.llmConfigured ? (
