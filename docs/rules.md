@@ -63,3 +63,10 @@
   returns `501` when unconfigured so the deterministic rule parser takes over.
 - All plan input is passed through `sanitizeTripPlan` (coerce / drop invalid values) before it
   reaches the form or a hand-off.
+- **Route engine** (`src/lib/itinerary.ts`, `src/lib/connections.ts`): the connection dataset is
+  **simulated demonstration data only** — never describe it as live inventory or real-time transport
+  data. Every connection carries `simulated: true` and a source/updated-at stamp, and the UI shows a
+  simulated-data banner. The engine must not fabricate a connection or itinerary: an impossible route
+  returns no results plus an explanation, and impossible connections are rejected with a reason
+  (sold out, too few seats, transfer below the 30-minute minimum, unsupported accessibility/luggage).
+  Multi-leg journeys are capped at 3 legs and never revisit a city.
