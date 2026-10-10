@@ -22,15 +22,17 @@ Legend: ✅ done in this build · 🚧 next · ⏳ planned
 
 ## Phase 2 — Backend & persistence 🚧
 - ✅ Minimal Express + SQLite API scaffold (health, itineraries, trips, disruptions, chat).
+- ✅ Agent endpoints — `GET /api/agent/status` and `POST /api/agent/plan` (server-side LLM proxy, returns 501 when unconfigured so the client falls back).
 - 🚧 Move the intent/compare/chat engine into reusable server modules.
 - 🚧 Persist bookings (`POST /api/bookings`) and cancellations from the UI.
 - 🚧 Persist disruption generation + recovery actions.
 - 🚧 Wire the frontend to the live API as the primary source (fallback becomes error-only).
 
-## Phase 3 — Agentic intelligence ⏳
-- LLM-backed chat with tool-calling over inventory/advisories.
-- Proactive price-drop and disruption watchers with notification centre.
-- Personalised ranking from trip history and preferences.
+## Phase 3 — Agentic intelligence 🚧
+- ✅ **Conversational Trip Planner** — free-text (English + Telugu) extraction into an editable structured form, follow-up questions for missing essentials, never invents dates, LLM with secure server-side key + rule-based fallback (`src/lib/planner.ts`, `src/lib/llm.ts`, `TripPlannerPage`, `TripPlanForm`).
+- 🚧 LLM-backed chat with tool-calling over inventory/advisories.
+- ⏳ Proactive price-drop and disruption watchers with notification centre.
+- ⏳ Personalised ranking from trip history and preferences.
 
 ## Phase 4 — Auth, payments, polish ⏳
 - Login / profile / saved travellers and documents.
