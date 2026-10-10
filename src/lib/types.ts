@@ -283,3 +283,61 @@ export const DEFAULT_ITINERARY_FILTERS: ItineraryFilters = {
   directOnly: false,
   availabilityOnly: false,
 };
+
+// ── Disruption simulator (simulated what-if scenarios) ───────────────────────
+
+export type DisruptionKind =
+  | "bus-delay"
+  | "bus-cancellation"
+  | "missed-connection"
+  | "last-mile-unavailable";
+
+/** One injected disruption. Always simulated. */
+export interface DisruptionEvent {
+  id: string;
+  kind: DisruptionKind;
+  label: string;
+  severity: DisruptionSeverity;
+  /** Zero-based index of the affected connection in the original itinerary. */
+  legIndex: number;
+  detail: string;
+  /** Delay in minutes for delay and missed-connection events, else null. */
+  delayMin: number | null;
+  createdAt: string;
+  simulated: true;
+}
+
+/** A recalculated journey offered as a recovery option after a disruption. */
+export interface RevisedItinerary {
+  itinerary: PlannedItinerary;
+  /** Short description of how this option recovers the journey. */
+  strategy: string;
+  /** Extra total fare versus the original itinerary (negative = cheaper). */
+  additionalCost: number;
+  /** Arrival change versus the original itinerary (positive = later). */
+  addedDelayMin: number;
+  meetsArrivalDeadline: boolean;
+  arrivalSlackMin: number | null;
+  /** Null when the plan had no budget limit. */
+  withinBudget: boolean | null;
+  /** How many original legs this option preserves. */
+  preservedLegs: number;
+  tradeoffs: string[];
+  feasible: boolean;
+}
+
+/** Full result of simulating one disruption against one itinerary. */
+export interface DisruptionSimulation {
+  event: DisruptionEvent;
+  original: PlannedItinerary;
+  affected: { index: number; connection: Connection };
+  /** Human-readable description of the remaining-journey recalculation. */
+  recalculation: string;
+  revised: RevisedItinerary[];
+  feasible: RevisedItinerary[];
+  alternatives: RevisedItinerary[];
+  noAlternative: boolean;
+  explanation: string;
+  simulated: true;
+  generatedAt: string;
+}
